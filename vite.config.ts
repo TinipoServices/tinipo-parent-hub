@@ -5,11 +5,10 @@ import { componentTagger } from "lovable-tagger";
 
 // CHANGE ONLY THIS PART 👇
 export default defineConfig(({ mode }) => ({
-  base: mode === "production" ? "/tinipo-parent-hub/" : "/",
 
   server: {
     host: "::",
-    port: 8080,
+    port: 8000,
     hmr: {
       overlay: false,
     },
