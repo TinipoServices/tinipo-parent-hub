@@ -27,6 +27,7 @@ const ContactSection = () => {
     message: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [result, setResult] = useState<string>("")
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -36,12 +37,26 @@ const ContactSection = () => {
       setErrors((prev) => ({ ...prev, [name]: '' }));
     }
   };
+  const onSubmit = async (event) => {
+    event.preventDefault();
+    const formData = new FormData(event.target);
+    formData.append("access_key", "5cf0711d-0006-41f2-86b9-8e364cbd9c25");
 
-  const handleSubmit = async (e: React.FormEvent) => {
+    const response = await fetch("https://api.web3forms.com/submit", {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await response.json();
+    setResult(data.success ? "Success!" : "Error");
+  };
+  const handleSubmit = async (
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
     e.preventDefault();
     setErrors({});
-
-    // Validate form data
+  
+    // ✅ Validate form state (Zod)
     const result = contactSchema.safeParse(formData);
     if (!result.success) {
       const fieldErrors: Record<string, string> = {};
@@ -53,25 +68,52 @@ const ContactSection = () => {
       setErrors(fieldErrors);
       return;
     }
-
+  
     setIsSubmitting(true);
-
-    // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
+  
+    // Optional UX delay
+  
+    // ✅ Use currentTarget (ALWAYS SAFE)
+    const web3FormData = new FormData(e.currentTarget);
+    web3FormData.append(
+      "access_key",
+      "5cf0711d-0006-41f2-86b9-8e364cbd9c25"
+    );
+  
+    const response = await fetch(
+      "https://api.web3forms.com/submit",
+      {
+        method: "POST",
+        body: web3FormData,
+      }
+    );
+  
+    const data = await response.json();
+  
+    setResult(data.success ? "Success!" : "Error");
     setIsSubmitting(false);
     setIsSuccess(true);
+  
     toast({
-      title: 'Message Sent! 🎉',
-      description: 'Thank you for reaching out. We\'ll get back to you within 24 hours.',
+      title: "Message Sent! 🎉",
+      description:
+        "Thank you for reaching out. We'll get back to you within 24 hours.",
     });
-
-    // Reset form after success
+  
+    // ✅ Reset form safely
+    e.currentTarget.reset();
+  
     setTimeout(() => {
-      setFormData({ name: '', email: '', phone: '', message: '' });
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        message: "",
+      });
       setIsSuccess(false);
     }, 3000);
   };
+  
 
   const contactInfo = [
     {
