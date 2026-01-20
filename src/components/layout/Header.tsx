@@ -95,9 +95,10 @@ const Header = () => {
 
       {/* Mobile Menu */}
       <div
-        className={`md:hidden absolute top-full left-0 right-0 bg-card/98 backdrop-blur-lg shadow-elevated transition-all duration-300 overflow-hidden ${
-          isMobileMenuOpen ? 'max-h-screen py-6' : 'max-h-0'
-        }`}
+        className={`md:hidden absolute top-full left-0 right-0 z-40
+        bg-gradient-to-b from-orange-50 via-orange-100 to-orange-200
+        shadow-elevated transition-all duration-300 overflow-hidden
+        ${isMobileMenuOpen ? 'max-h-screen py-6' : 'max-h-0'}`}
       >
         <nav className="container-custom flex flex-col gap-4">
           {navLinks.map((link) => (
