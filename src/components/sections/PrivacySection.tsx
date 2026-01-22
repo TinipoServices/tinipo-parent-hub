@@ -110,7 +110,7 @@ const PrivacySection = () => {
 
           <div className="mt-8 pt-6 border-t border-primary-foreground/10">
             <p className="text-sm text-primary-foreground/50">
-              Last updated: January 2026. For the full privacy policy or any questions, please contact us at privacy@tinipo.com
+              Last updated: January 2026. For the full privacy policy or any questions, please contact us at tinipo.services@gmail.com
             </p>
           </div>
         </div>

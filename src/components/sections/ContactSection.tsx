@@ -119,19 +119,19 @@ const ContactSection = () => {
     {
       icon: <Mail className="text-primary" size={24} />,
       title: 'Email Us',
-      value: 'hello@tinipo.com',
-      link: 'mailto:hello@tinipo.com',
+      value: 'tinipo.services@gmail.com',
+      link: 'tinipo.services@gmail.com',
     },
     {
       icon: <Phone className="text-secondary" size={24} />,
       title: 'Call Us',
-      value: '+1 (555) 123-4567',
-      link: 'tel:+15551234567',
+      value: '+918882596320',
+      link: 'tel:+918882596320',
     },
     {
       icon: <MapPin className="text-accent" size={24} />,
       title: 'Visit Us',
-      value: '123 Activity Lane, Learning City',
+      value: 'Jaipur',
       link: '#',
     },
   ];
@@ -178,7 +178,7 @@ const ContactSection = () => {
                       name="name"
                       value={formData.name}
                       onChange={handleChange}
-                      placeholder="John Doe"
+                      placeholder="Abhishek"
                       className={`h-12 rounded-xl ${errors.name ? 'border-destructive' : ''}`}
                     />
                     {errors.name && <p className="text-destructive text-sm mt-1">{errors.name}</p>}
@@ -194,7 +194,7 @@ const ContactSection = () => {
                       type="email"
                       value={formData.email}
                       onChange={handleChange}
-                      placeholder="john@example.com"
+                      placeholder="abhi@gmail.com"
                       className={`h-12 rounded-xl ${errors.email ? 'border-destructive' : ''}`}
                     />
                     {errors.email && <p className="text-destructive text-sm mt-1">{errors.email}</p>}
@@ -210,7 +210,7 @@ const ContactSection = () => {
                       type="tel"
                       value={formData.phone}
                       onChange={handleChange}
-                      placeholder="+1 (555) 123-4567"
+                      placeholder="+912788123457"
                       className="h-12 rounded-xl"
                     />
                   </div>

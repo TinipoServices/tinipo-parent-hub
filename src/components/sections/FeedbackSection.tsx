@@ -6,42 +6,42 @@ const FeedbackSection = () => {
 
   const testimonials = [
     {
-      name: 'Sarah Johnson',
-      role: 'Mother of 2',
+      name: 'Neha Gupta',
+      role: 'Mother of 2 kids',
       content: 'Tinipo has been a game-changer for our family! I no longer stress about missed classes or forgotten schedules. The progress reports help me stay connected to my kids\' achievements.',
       rating: 5,
       avatar: '👩',
     },
     {
-      name: 'Michael Chen',
-      role: 'Father of 3',
-      content: 'Managing three kids with different activities used to be chaos. Now everything is in one place - schedules, payments, photos. I even get to see videos of their practice sessions!',
+      name: 'Sanchit Goyal',
+      role: 'Father of 2 kids',
+      content: 'Managing two kids with different activities used to be chaos. Now everything is in one place - schedules, payments, photos. I even get to see videos of their practice sessions!',
       rating: 5,
       avatar: '👨',
     },
     {
-      name: 'Priya Sharma',
+      name: 'Prinaka Sharma',
       role: 'Working Mom',
       content: 'The automatic reminders have saved me so many times! As a working parent, I can\'t always keep track of everything. Tinipo does it for me.',
       rating: 5,
       avatar: '👩‍💼',
     },
     {
-      name: 'David Martinez',
+      name: 'Roshan Sharma',
       role: 'Dance Coach',
       content: 'From a coach\'s perspective, Tinipo reduced my admin work by 70%. I spend more time teaching and less time managing paperwork. The parent communication is seamless.',
       rating: 5,
       avatar: '🧑‍🏫',
     },
     {
-      name: 'Emily Wilson',
+      name: 'Priya Jindal',
       role: 'Mother of twins',
       content: 'Having twins in different activities was overwhelming until we found Tinipo. The unified dashboard shows everything at a glance. Highly recommend to all parents!',
       rating: 5,
       avatar: '👩‍👧‍👦',
     },
     {
-      name: 'Robert Kim',
+      name: 'Abhishek Singh',
       role: 'Single Dad',
       content: 'I was always missing important updates before Tinipo. Now I get instant notifications about schedule changes. My son\'s swimming coach can reach me easily.',
       rating: 5,
@@ -104,7 +104,7 @@ const FeedbackSection = () => {
         </div>
 
         {/* Trust Badge */}
-        <div className={`mt-16 text-center transition-all duration-700 delay-400 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+        {/* <div className={`mt-16 text-center transition-all duration-700 delay-400 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
           <div className="inline-flex flex-col sm:flex-row items-center gap-4 p-6 rounded-2xl bg-card shadow-soft">
             <div className="flex -space-x-3">
               {['👨', '👩', '👨‍🦱', '👩‍🦰', '🧔'].map((emoji, i) => (
@@ -126,7 +126,7 @@ const FeedbackSection = () => {
               <p className="text-sm text-muted-foreground">Based on 2,000+ reviews from happy parents</p>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
     </section>
   );

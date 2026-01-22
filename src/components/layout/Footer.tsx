@@ -78,15 +78,15 @@ const Footer = () => {
             <ul className="space-y-3">
               <li className="flex items-center gap-3 text-primary-foreground/70">
                 <Mail size={18} className="text-accent" />
-                <span>hello@tinipo.com</span>
+                <span>tinipo.services@gmail.com</span>
               </li>
               <li className="flex items-center gap-3 text-primary-foreground/70">
                 <Phone size={18} className="text-accent" />
-                <span>+1 (555) 123-4567</span>
+                <span>+918882596320</span>
               </li>
               <li className="flex items-start gap-3 text-primary-foreground/70">
                 <MapPin size={18} className="text-accent mt-1" />
-                <span>123 Activity Lane<br />Learning City, LC 12345</span>
+                <span>Jaipur, Rajasthan, 302017</span>
               </li>
             </ul>
           </div>

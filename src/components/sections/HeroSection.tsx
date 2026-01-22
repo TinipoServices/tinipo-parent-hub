@@ -34,7 +34,7 @@ const HeroSection = () => {
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/20 text-secondary font-medium">
               <Star size={16} className="fill-accent text-accent" />
-              <span>Trusted by 10,000+ Parents</span>
+              {/* <span>Trusted by 10,000+ Parents</span> */}
             </div>
 
             {/* Headline */}
@@ -71,7 +71,7 @@ const HeroSection = () => {
 
             {/* Stats */}
             <div className="flex flex-wrap gap-8 pt-4">
-              <div className="flex items-center gap-3">
+              {/* <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
                   <Users className="text-primary" size={24} />
                 </div>
@@ -79,8 +79,8 @@ const HeroSection = () => {
                   <p className="font-display font-bold text-2xl">500+</p>
                   <p className="text-sm text-muted-foreground">Expert Mentors</p>
                 </div>
-              </div>
-              <div className="flex items-center gap-3">
+              </div> */}
+              {/* <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center">
                   <Calendar className="text-secondary" size={24} />
                 </div>
@@ -88,7 +88,7 @@ const HeroSection = () => {
                   <p className="font-display font-bold text-2xl">50K+</p>
                   <p className="text-sm text-muted-foreground">Classes Monthly</p>
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
 
