@@ -31,7 +31,7 @@ const PrivacySection = () => {
       description: 'Clear policies on what data we collect, how we use it, and your rights.',
     },
     {
-      icon: <Bell className="text-coral-dark" size={24} />,
+      icon: <Bell className="text-orange" size={24} />,
       title: 'Breach Notification',
       description: 'Immediate notification in the unlikely event of any security incident.',
     },

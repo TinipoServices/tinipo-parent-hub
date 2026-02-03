@@ -61,19 +61,20 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
-        coral: {
-          light: "hsl(var(--coral-light))",
+        blue: {
+          light: "hsl(var(--blue-light))",
           DEFAULT: "hsl(var(--primary))",
-          dark: "hsl(var(--coral-dark))",
+          dark: "hsl(var(--blue-dark))",
         },
-        teal: {
-          light: "hsl(var(--teal-light))",
+        sky: {
+          light: "hsl(var(--sky-light))",
           DEFAULT: "hsl(var(--secondary))",
-          dark: "hsl(var(--teal-dark))",
+          dark: "hsl(var(--sky-dark))",
         },
         cream: "hsl(var(--cream))",
         success: "hsl(var(--green-success))",
         purple: "hsl(var(--purple-soft))",
+        orange: "hsl(var(--orange-warm))",
       },
       borderRadius: {
         lg: "var(--radius)",

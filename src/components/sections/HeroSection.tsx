@@ -13,7 +13,7 @@ const HeroSection = () => {
   return (
     <section id="home" className="relative min-h-screen flex items-center overflow-hidden">
       {/* Background Gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-coral-light/30 via-background to-teal-light/30" />
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-light/50 via-background to-sky-light/50" />
       
       {/* Decorative Elements */}
       <div className="absolute top-20 left-10 w-20 h-20 rounded-full bg-primary/20 animate-float" />
