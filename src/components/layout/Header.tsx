@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Menu, X } from 'lucide-react';
+import logo from '@/assets/logo.png';
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -47,12 +48,17 @@ const Header = () => {
           }}
           className="flex items-center gap-2 group"
         >
-          <div className="w-10 h-10 rounded-full gradient-hero flex items-center justify-center shadow-soft group-hover:scale-110 transition-transform">
-            <span className="text-primary-foreground font-display font-bold text-xl">T</span>
+          <div className="flex items-center gap-2">
+            <img
+              src={logo}
+              alt="Tinipo Logo"
+              className="h-9 sm:h-10 lg:h-11 w-auto object-contain"
+            />
+
+            <span className="font-display font-bold text-2xl text-gradient-primary">
+              Tinipo
+            </span>
           </div>
-          <span className="font-display font-bold text-2xl text-gradient-primary">
-            Tinipo
-          </span>
         </a>
 
         {/* Desktop Navigation */}

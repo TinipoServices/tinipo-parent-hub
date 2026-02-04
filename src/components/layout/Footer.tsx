@@ -1,4 +1,5 @@
 import { Heart, Mail, Phone, MapPin } from 'lucide-react';
+import logo from '@/assets/logo.png';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -16,12 +17,23 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           {/* Brand */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2">
+            {/* <div className="flex items-center gap-2">
               <div className="w-10 h-10 rounded-full gradient-hero flex items-center justify-center">
                 <span className="text-primary-foreground font-display font-bold text-xl">T</span>
               </div>
               <span className="font-display font-bold text-2xl">Tinipo</span>
-            </div>
+            </div> */}
+            <div className="flex items-center gap-2">
+            <img
+              src={logo}
+              alt="Tinipo Logo"
+              className="h-9 sm:h-10 lg:h-11 w-auto object-contain"
+            />
+
+            <span className="font-display font-bold text-2xl text-gradient-primary">
+              Tinipo
+            </span>
+          </div>
             <p className="text-primary-foreground/70 leading-relaxed">
               The Platform to Enhance Kids Activities & Tracking Daily Performance. Connecting parents, mentors, and students.
             </p>
