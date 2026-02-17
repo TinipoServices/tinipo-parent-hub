@@ -85,7 +85,7 @@ const Footer = () => {
           </div>
 
           {/* Contact */}
-          <div>
+          {/* <div>
             <h4 className="font-display font-bold text-lg mb-4">Contact Us</h4>
             <ul className="space-y-3">
               <li className="flex items-center gap-3 text-primary-foreground/70">
@@ -101,7 +101,7 @@ const Footer = () => {
                 <span>Jaipur, Rajasthan, 302017</span>
               </li>
             </ul>
-          </div>
+          </div> */}
         </div>
 
         {/* Bottom Bar */}
