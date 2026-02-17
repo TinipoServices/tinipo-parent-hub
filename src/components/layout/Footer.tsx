@@ -31,7 +31,7 @@ const Footer = () => {
             />
 
             <span className="font-display font-bold text-2xl text-gradient-primary">
-              Tinipo
+              Tinipo Enterprises
             </span>
           </div>
             <p className="text-primary-foreground/70 leading-relaxed">
