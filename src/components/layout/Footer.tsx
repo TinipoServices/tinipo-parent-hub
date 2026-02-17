@@ -107,7 +107,7 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="mt-12 pt-8 border-t border-primary-foreground/10 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-primary-foreground/50 text-sm">
-            © {currentYear} Tinipo. All rights reserved.
+            © {currentYear} Tinipo Enterprises. All rights reserved.
           </p>
           <p className="text-primary-foreground/50 text-sm flex items-center gap-1">
             Made with <Heart size={14} className="text-primary fill-primary" /> for amazing families
