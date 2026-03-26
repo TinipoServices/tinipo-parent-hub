@@ -1,4 +1,5 @@
 import { Heart, Mail, Phone, MapPin } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import logo from '@/assets/logo.png';
 
 const Footer = () => {
@@ -58,16 +59,12 @@ const Footer = () => {
                 </li>
               ))}
               <li>
-                <a
-                  href="#privacy"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    scrollToSection('#privacy');
-                  }}
+                <Link
+                  to="/privacy-policy"
                   className="text-primary-foreground/70 hover:text-accent transition-colors"
                 >
                   Privacy Policy
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
