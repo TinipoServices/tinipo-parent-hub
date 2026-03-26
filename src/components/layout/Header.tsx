@@ -130,9 +130,16 @@ const Header = () => {
             </a>
           ))}
           <Button
-            variant="hero"
+            variant="outline"
             size="lg"
             className="mt-4"
+            onClick={() => { setIsMobileMenuOpen(false); navigate('/login'); }}
+          >
+            Login
+          </Button>
+          <Button
+            variant="hero"
+            size="lg"
             onClick={() => scrollToSection('#contact')}
           >
             Get Started
