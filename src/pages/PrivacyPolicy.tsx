@@ -143,7 +143,7 @@ const PrivacyPolicy = () => {
             </p>
             <div className="mt-3 p-4 rounded-xl bg-card border border-border text-sm text-muted-foreground space-y-1">
               <p><strong className="text-foreground">Email:</strong> tinipo.services@gmail.com</p>
-              <p><strong className="text-foreground">Phone:</strong> +91 93516 37498</p>
+              <p><strong className="text-foreground">Phone:</strong> +91 8882596320</p>
               <p><strong className="text-foreground">Address:</strong> Jaipur, Rajasthan, 302017</p>
             </div>
           </section>
