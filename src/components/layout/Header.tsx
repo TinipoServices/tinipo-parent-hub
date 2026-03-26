@@ -81,7 +81,14 @@ const Header = () => {
         </nav>
 
         {/* CTA Button */}
-        <div className="hidden md:block">
+        <div className="hidden md:flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/login')}
+          >
+            Login
+          </Button>
           <Button
             variant="hero"
             size="lg"
