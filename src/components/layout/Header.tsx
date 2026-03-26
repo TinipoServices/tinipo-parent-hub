@@ -5,6 +5,7 @@ import { Menu, X } from 'lucide-react';
 import logo from '@/assets/logo.png';
 
 const Header = () => {
+  const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
