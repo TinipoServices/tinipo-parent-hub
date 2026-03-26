@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Menu, X } from 'lucide-react';
 import logo from '@/assets/logo.png';
 
 const Header = () => {
+  const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -80,7 +82,14 @@ const Header = () => {
         </nav>
 
         {/* CTA Button */}
-        <div className="hidden md:block">
+        <div className="hidden md:flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/login')}
+          >
+            Login
+          </Button>
           <Button
             variant="hero"
             size="lg"
@@ -121,9 +130,16 @@ const Header = () => {
             </a>
           ))}
           <Button
-            variant="hero"
+            variant="outline"
             size="lg"
             className="mt-4"
+            onClick={() => { setIsMobileMenuOpen(false); navigate('/login'); }}
+          >
+            Login
+          </Button>
+          <Button
+            variant="hero"
+            size="lg"
             onClick={() => scrollToSection('#contact')}
           >
             Get Started
