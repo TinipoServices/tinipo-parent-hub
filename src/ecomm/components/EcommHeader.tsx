@@ -9,7 +9,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Badge } from "@/components/ui/badge";
 import logo from "@/assets/logo.png";
 import { useCart } from "../context/CartContext";
 import { useShopAuth } from "../context/ShopAuthContext";
@@ -124,21 +123,17 @@ export function EcommHeader() {
 
           <Button
             variant="default"
-            size="icon"
-            className="relative sm:size-default sm:px-4 sm:gap-2 rounded-full sm:rounded-lg"
+            className="h-10 gap-2 rounded-xl px-3 sm:px-4"
             onClick={goCheckout}
             aria-label={`Cart, ${itemCount} items`}
           >
-            <ShoppingCart className="h-5 w-5 sm:mr-0" />
-            {itemCount > 0 && (
-              <Badge
-                className="absolute -top-1 -right-1 h-5 min-w-5 px-1 flex items-center justify-center p-0 text-[10px] sm:static sm:h-5 sm:min-w-0 sm:px-1.5"
-                variant="secondary"
-              >
+            <ShoppingCart className="h-5 w-5 shrink-0" />
+            {itemCount > 0 ? (
+              <span className="flex h-6 min-w-[1.5rem] items-center justify-center rounded-md bg-primary-foreground/20 px-1.5 text-xs font-bold tabular-nums">
                 {itemCount > 99 ? "99+" : itemCount}
-              </Badge>
-            )}
-            <span className="hidden sm:inline">Cart</span>
+              </span>
+            ) : null}
+            <span className="font-semibold text-sm whitespace-nowrap">Cart</span>
           </Button>
         </div>
       </div>

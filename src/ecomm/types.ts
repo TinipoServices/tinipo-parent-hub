@@ -21,7 +21,11 @@ export interface Category {
 export interface Product {
   id: string;
   name: string;
+  /** Primary image (list cards); often same as images[0]. */
   image: string;
+  /** Gallery images for product detail; falls back to [image] if omitted. */
+  images?: string[];
+  description?: string;
   category_id: string;
   mrp_amount: number;
   is_active: boolean;

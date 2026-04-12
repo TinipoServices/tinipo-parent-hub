@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Menu, X } from 'lucide-react';
 import logo from '@/assets/logo.png';
@@ -83,6 +83,12 @@ const Header = () => {
 
         {/* CTA Button */}
         <div className="hidden md:flex items-center gap-3">
+          <Link
+            to="/shop/products"
+            className="font-medium text-foreground/80 hover:text-primary transition-colors"
+          >
+            Shop
+          </Link>
           <Button
             variant="outline"
             size="sm"
@@ -129,6 +135,13 @@ const Header = () => {
               {link.label}
             </a>
           ))}
+          <Link
+            to="/shop/products"
+            className="font-medium text-lg py-2 text-foreground/80 hover:text-primary transition-colors"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            Shop
+          </Link>
           <Button
             variant="outline"
             size="lg"

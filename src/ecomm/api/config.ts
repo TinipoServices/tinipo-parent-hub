@@ -11,8 +11,9 @@ export const OTP_VALIDATE_PATH = "/otp/validate/";
 
 /**
  * Suggested catalog & order endpoints (implement on Django to match):
- * - GET  /api/catalog/categories/     → { results: Category[] } or Category[]
- * - GET  /api/catalog/products/?category=<id>&search=<q>  → { results: Product[] } or Product[]
+ * - GET  /api/catalog/categories/?pincode=<6-digit>   → optional pricing context per city
+ * - GET  /api/catalog/products/?category=&search=&pincode=
+ * - GET  /api/catalog/products/<id>/?pincode=           → single product (detail)
  * - POST /api/orders/confirm/         → body: { lines: { product_id, quantity }[], address, payment_mode: "COD" }
  * - GET  /api/orders/                 → { results: OrderSummary[] }
  * - GET  /api/orders/<id>/            → OrderDetail
@@ -24,6 +25,10 @@ export const ORDERS_LIST_PATH = "/api/orders/";
 
 export function orderDetailPath(orderId: string): string {
   return `/api/orders/${orderId}/`;
+}
+
+export function catalogProductDetailPath(productId: string): string {
+  return `/api/catalog/products/${encodeURIComponent(productId)}/`;
 }
 
 /** When not "false", catalog/orders use local dummy data + localStorage for orders. Set VITE_ECOMM_USE_MOCK=false to call the real API. */

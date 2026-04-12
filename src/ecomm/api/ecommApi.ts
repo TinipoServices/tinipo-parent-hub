@@ -1,5 +1,6 @@
 import {
   apiUrl,
+  catalogProductDetailPath,
   CATALOG_CATEGORIES_PATH,
   CATALOG_PRODUCTS_PATH,
   isEcommMockMode,
@@ -9,7 +10,14 @@ import {
   OTP_GENERATE_PATH,
   OTP_VALIDATE_PATH,
 } from "./config";
-import { DUMMY_CATEGORIES, DUMMY_PRODUCTS, sortedCategories, sortedProducts } from "../data/dummyCatalog";
+import {
+  applyMockPincodeToProduct,
+  DUMMY_CATEGORIES,
+  DUMMY_PRODUCTS,
+  getDummyProductById,
+  sortedCategories,
+  sortedProducts,
+} from "../data/dummyCatalog";
 import type { Category, CustomerAddress, OrderDetail, OrderSummary, Product, ShopUser } from "../types";
 import {
   appendMockOrder,
@@ -65,6 +73,25 @@ export function extractAccessToken(data: unknown): string | null {
   return null;
 }
 
+function sanitizePincode(pincode: string | undefined): string | undefined {
+  const d = pincode?.replace(/\D/g, "") ?? "";
+  return d.length === 6 ? d : undefined;
+}
+
+function appendPincode(sp: URLSearchParams, pincode: string | undefined) {
+  const p = sanitizePincode(pincode);
+  if (p) sp.set("pincode", p);
+}
+
+function normalizeProduct(p: Product): Product {
+  const imgs = p.images?.length ? [...p.images] : p.image ? [p.image] : [];
+  return {
+    ...p,
+    image: p.image || imgs[0] || "",
+    images: imgs.length > 0 ? imgs : undefined,
+  };
+}
+
 export async function requestOtp(body: Record<string, unknown>): Promise<void> {
   if (isEcommMockMode()) {
     await new Promise((r) => setTimeout(r, 400));
@@ -97,18 +124,28 @@ export async function validateOtp(body: Record<string, unknown>): Promise<{ toke
   return { token: extractAccessToken(raw), raw };
 }
 
-export async function fetchCategories(): Promise<Category[]> {
+export async function fetchCategories(pincode?: string): Promise<Category[]> {
   if (isEcommMockMode()) {
     await new Promise((r) => setTimeout(r, 200));
     return sortedCategories(DUMMY_CATEGORIES);
   }
-  const res = await fetch(apiUrl(CATALOG_CATEGORIES_PATH), { headers: authHeaders() });
+  const sp = new URLSearchParams();
+  appendPincode(sp, pincode);
+  const q = sp.toString();
+  const url = `${apiUrl(CATALOG_CATEGORIES_PATH)}${q ? `?${q}` : ""}`;
+  const res = await fetch(url, { headers: authHeaders() });
   const data = await parseJson<unknown>(res);
   if (!res.ok) throw new Error((data as { detail?: string }).detail ?? "Failed to load categories");
   return sortedCategories(unwrapList<Category>(data));
 }
 
-export async function fetchProducts(params: { categoryId?: string; search?: string }): Promise<Product[]> {
+export async function fetchProducts(params: {
+  categoryId?: string;
+  search?: string;
+  pincode?: string;
+}): Promise<Product[]> {
+  const pin = sanitizePincode(params.pincode);
+
   if (isEcommMockMode()) {
     await new Promise((r) => setTimeout(r, 200));
     let list = DUMMY_PRODUCTS.filter((p) => p.is_active);
@@ -117,17 +154,43 @@ export async function fetchProducts(params: { categoryId?: string; search?: stri
       const q = params.search.trim().toLowerCase();
       list = list.filter((p) => p.name.toLowerCase().includes(q));
     }
-    return sortedProducts(list);
+    const mapped = pin ? list.map((p) => applyMockPincodeToProduct(p, pin)) : list;
+    return sortedProducts(mapped.map(normalizeProduct));
   }
   const sp = new URLSearchParams();
   if (params.categoryId) sp.set("category", params.categoryId);
   if (params.search?.trim()) sp.set("search", params.search.trim());
+  appendPincode(sp, params.pincode);
   const q = sp.toString();
   const url = `${apiUrl(CATALOG_PRODUCTS_PATH)}${q ? `?${q}` : ""}`;
   const res = await fetch(url, { headers: authHeaders() });
   const data = await parseJson<unknown>(res);
   if (!res.ok) throw new Error((data as { detail?: string }).detail ?? "Failed to load products");
-  return sortedProducts(unwrapList<Product>(data).filter((p) => p.is_active !== false));
+  return sortedProducts(
+    unwrapList<Product>(data)
+      .filter((p) => p.is_active !== false)
+      .map(normalizeProduct),
+  );
+}
+
+export async function fetchProductDetail(productId: string, pincode?: string): Promise<Product> {
+  const pin = sanitizePincode(pincode);
+
+  if (isEcommMockMode()) {
+    await new Promise((r) => setTimeout(r, 200));
+    const raw = getDummyProductById(productId);
+    if (!raw) throw new Error("Product not found");
+    const adjusted = pin ? applyMockPincodeToProduct(raw, pin) : raw;
+    return normalizeProduct(adjusted);
+  }
+  const sp = new URLSearchParams();
+  appendPincode(sp, pincode);
+  const q = sp.toString();
+  const url = `${apiUrl(catalogProductDetailPath(productId))}${q ? `?${q}` : ""}`;
+  const res = await fetch(url, { headers: authHeaders() });
+  const data = await parseJson<Product>(res);
+  if (!res.ok) throw new Error((data as unknown as { detail?: string }).detail ?? "Failed to load product");
+  return normalizeProduct(data);
 }
 
 export async function confirmOrder(payload: {
