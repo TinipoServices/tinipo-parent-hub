@@ -71,10 +71,10 @@ export function ShopAuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const sendLoginOtp = useCallback(async (phone: string) => {
+  const sendLoginOtp = useCallback(async (phone_no: string) => {
     setIsSendingOtp(true);
     try {
-      await requestOtp({ phone, flow: "login" });
+      await requestOtp({ phone_no, flow: "login" });
     } finally {
       setIsSendingOtp(false);
     }
@@ -107,11 +107,12 @@ export function ShopAuthProvider({ children }: { children: ReactNode }) {
   );
 
   const completeLoginWithOtp = useCallback(
-    async (phone: string, otp: string) => {
+    async (phone_no: string, otp: string) => {
       setIsValidating(true);
       try {
-        const { token, raw } = await validateOtp({ phone, otp, flow: "login" });
+        const { token, raw } = await validateOtp({ phone_no, otp, flow: "login" });
         const existing = readUser();
+        const phone=phone_no;
         if (existing && existing.phone === phone) {
           persistSession(token, existing);
           return;

@@ -3,7 +3,8 @@
  *
  * Documented REST shapes are assumptions for the frontend; align response keys with Django when wiring.
  */
-export const ECOMM_API_BASE = "https://sandbox-backend.tinipo.in";
+//export const ECOMM_API_BASE = "https://sandbox-backend.tinipo.in";
+export const ECOMM_API_BASE = "http://localhost:8000";
 
 /** Auth (given) */
 export const OTP_GENERATE_PATH = "/otp/generate/";
@@ -37,7 +38,7 @@ export function isEcommMockMode(): boolean {
 }
 
 export function apiUrl(path: string): string {
-  const base = ECOMM_API_BASE.replace(/\/$/, "");
+  const base = import.meta.env.VITE_ECOMM_API_BASE.replace(/\/$/, "");
   const p = path.startsWith("/") ? path : `/${path}`;
   return `${base}${p}`;
 }

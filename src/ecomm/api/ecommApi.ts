@@ -97,11 +97,13 @@ export async function requestOtp(body: Record<string, unknown>): Promise<void> {
     await new Promise((r) => setTimeout(r, 400));
     return;
   }
+  console.log("request otp functon",body)
   const res = await fetch(apiUrl(OTP_GENERATE_PATH), {
     method: "POST",
     headers: { Accept: "application/json", "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
+  console.log("response otp generate",res)
   if (!res.ok) throw new Error((await parseJson<{ detail?: string }>(res)).detail ?? `OTP request failed (${res.status})`);
 }
 
