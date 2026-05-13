@@ -7,14 +7,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchProductDetail } from "../api/ecommApi";
 import { useCart } from "../context/CartContext";
-import { usePincodeForCatalog } from "../hooks/usePincodeForCatalog";
+import { useLocation as useShopLocation } from "../context/LocationContext";
 import { formatInr } from "../lib/format";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 export default function ShopProductDetailPage() {
   const { productId } = useParams<{ productId: string }>();
-  const { pincodeForApi, profilePin, usesProfilePin } = usePincodeForCatalog();
+  const { location } = useShopLocation();
+  const pincodeForApi = location?.pincode;
   const { addItem } = useCart();
   const [activeIdx, setActiveIdx] = useState(0);
   const [qty, setQty] = useState(1);
@@ -43,11 +44,12 @@ export default function ShopProductDetailPage() {
 
   const addToCart = () => {
     if (!p) return;
+    const sell = p.selling_amount ?? p.mrp_amount;
     addItem({
       productId: p.id,
       name: p.name,
       image: p.image,
-      unitPrice: p.mrp_amount,
+      unitPrice: sell,
       quantity: qty,
     });
     toast.success(`${qty} × ${p.name} added to cart`);
@@ -59,16 +61,16 @@ export default function ShopProductDetailPage() {
   return (
     <div className="space-y-6">
       <Button variant="ghost" size="sm" className="gap-2 -ml-2" asChild>
-        <Link to={`/shop/products${usesProfilePin ? "" : pincodeForApi ? `?pin=${pincodeForApi}` : ""}`}>
+        <Link to="/shop/products">
           <ArrowLeft className="h-4 w-4" />
           Back to products
         </Link>
       </Button>
 
-      {usesProfilePin && (
+      {location && (
         <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-muted-foreground">
           <MapPin className="h-3.5 w-3.5 text-primary" />
-          Prices for PIN <span className="font-mono font-medium text-foreground">{profilePin}</span>
+          Prices for <span className="font-medium text-foreground">{location.city || location.pincode}</span>
         </div>
       )}
 
@@ -139,8 +141,25 @@ export default function ShopProductDetailPage() {
           <div className="space-y-5 min-w-0">
             <div>
               <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground leading-tight">{p.name}</h1>
-              <p className="text-2xl sm:text-3xl font-bold text-primary mt-3">{formatInr(p.mrp_amount)}</p>
-              <p className="text-xs text-muted-foreground mt-1">MRP (incl. of all taxes, where applicable)</p>
+              {(() => {
+                const sell = p.selling_amount ?? p.mrp_amount;
+                const hasDiscount = p.selling_amount != null && p.selling_amount < p.mrp_amount;
+                const pct = hasDiscount ? Math.round(((p.mrp_amount - sell) / p.mrp_amount) * 100) : 0;
+                return (
+                  <div className="mt-3 space-y-1">
+                    <div className="flex flex-wrap items-baseline gap-3">
+                      <span className="text-2xl sm:text-3xl font-bold text-primary">{formatInr(sell)}</span>
+                      {hasDiscount && (
+                        <>
+                          <span className="text-base text-muted-foreground line-through">{formatInr(p.mrp_amount)}</span>
+                          <span className="text-sm font-bold text-emerald-600">{pct}% off</span>
+                        </>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">Inclusive of all taxes</p>
+                  </div>
+                );
+              })()}
             </div>
 
             <Card className="border-border">
