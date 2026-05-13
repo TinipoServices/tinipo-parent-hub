@@ -11,6 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useShopAuth } from "../context/ShopAuthContext";
 import type { CustomerAddress, ShopUser } from "../types";
 import { isEcommMockMode } from "../api/config";
+import { AddressBook } from "../components/AddressBook";
 
 const emptyAddress = (): CustomerAddress => ({
   line1: "",
@@ -55,8 +56,8 @@ export default function ShopAuthPage() {
       <div className="max-w-lg mx-auto space-y-6">
         <Card className="border-border shadow-card">
           <CardHeader>
-            <CardTitle className="font-display">Signed in</CardTitle>
-            <CardDescription>Update your delivery details or sign out.</CardDescription>
+            <CardTitle className="font-display">My account</CardTitle>
+            <CardDescription>Manage your name, addresses, and order history.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="text-sm">
@@ -71,64 +72,16 @@ export default function ShopAuthPage() {
                 onChange={(e) => updateProfile({ ...user, name: e.target.value })}
               />
             </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="a1">Address line 1</Label>
-                <Input
-                  id="a1"
-                  value={user.address.line1}
-                  onChange={(e) =>
-                    updateProfile({ ...user, address: { ...user.address, line1: e.target.value } })
-                  }
-                />
-              </div>
-              <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="a2">Address line 2 (optional)</Label>
-                <Input
-                  id="a2"
-                  value={user.address.line2 ?? ""}
-                  onChange={(e) =>
-                    updateProfile({ ...user, address: { ...user.address, line2: e.target.value } })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="city">City</Label>
-                <Input
-                  id="city"
-                  value={user.address.city}
-                  onChange={(e) =>
-                    updateProfile({ ...user, address: { ...user.address, city: e.target.value } })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="state">State</Label>
-                <Input
-                  id="state"
-                  value={user.address.state}
-                  onChange={(e) =>
-                    updateProfile({ ...user, address: { ...user.address, state: e.target.value } })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="pin">PIN code</Label>
-                <Input
-                  id="pin"
-                  value={user.address.pincode}
-                  onChange={(e) =>
-                    updateProfile({ ...user, address: { ...user.address, pincode: e.target.value } })
-                  }
-                />
-              </div>
-            </div>
+            <AddressBook />
             <div className="flex flex-wrap gap-3 pt-2">
               <Button type="button" variant="outline" onClick={() => signOut()}>
                 Sign out
               </Button>
               <Button type="button" onClick={() => navigate(next)}>
                 Continue shopping
+              </Button>
+              <Button type="button" variant="ghost" onClick={() => navigate("/shop/orders")}>
+                Order history
               </Button>
             </div>
           </CardContent>
