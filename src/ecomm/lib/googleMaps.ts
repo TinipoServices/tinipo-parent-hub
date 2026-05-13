@@ -1,31 +1,27 @@
 /**
  * Lightweight Google Maps JS API loader for Places autocomplete.
- * Reads VITE_GOOGLE_MAPS_API_KEY (publishable, restrict by HTTP referrer in GCP console).
+ * Reads VITE_GOOGLE_MAPS_API_KEY (publishable; restrict by HTTP referrer in GCP console).
  */
-let loaderPromise: Promise<typeof google | null> | null = null;
 
-declare global {
-  // eslint-disable-next-line no-var
-  var google: typeof window extends { google: infer G } ? G : never;
-}
+/* eslint-disable @typescript-eslint/no-explicit-any */
+let loaderPromise: Promise<any> | null = null;
 
 export function getGoogleMapsApiKey(): string {
   return import.meta.env.VITE_GOOGLE_MAPS_API_KEY ?? "";
 }
 
-export function loadGoogleMaps(): Promise<typeof google | null> {
+export function loadGoogleMaps(): Promise<any> {
   const key = getGoogleMapsApiKey();
   if (!key) return Promise.resolve(null);
   if (typeof window === "undefined") return Promise.resolve(null);
-  // @ts-expect-error injected at runtime
-  if (window.google?.maps?.places) return Promise.resolve(window.google);
+  const w = window as any;
+  if (w.google?.maps?.places) return Promise.resolve(w.google);
   if (loaderPromise) return loaderPromise;
 
   loaderPromise = new Promise((resolve) => {
     const existing = document.querySelector<HTMLScriptElement>("script[data-tinipo-gmaps]");
     const onReady = () => {
-      // @ts-expect-error injected at runtime
-      resolve(window.google ?? null);
+      resolve((window as any).google ?? null);
     };
     if (existing) {
       existing.addEventListener("load", onReady, { once: true });
