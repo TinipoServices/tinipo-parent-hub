@@ -9,6 +9,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Login from "./pages/Login";
 import { ShopAuthProvider } from "./ecomm/context/ShopAuthContext";
 import { CartProvider } from "./ecomm/context/CartContext";
+import { LocationProvider } from "./ecomm/context/LocationContext";
 import { ShopRoutes } from "./ecomm/ShopRoutes";
 
 const queryClient = new QueryClient();
@@ -16,8 +17,9 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ShopAuthProvider>
-      <CartProvider>
-        <TooltipProvider>
+      <LocationProvider>
+        <CartProvider>
+          <TooltipProvider>
           <Toaster />
           <Sonner />
           <BrowserRouter>
@@ -30,8 +32,9 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
-        </TooltipProvider>
-      </CartProvider>
+          </TooltipProvider>
+        </CartProvider>
+      </LocationProvider>
     </ShopAuthProvider>
   </QueryClientProvider>
 );
