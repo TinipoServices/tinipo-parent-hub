@@ -1,15 +1,13 @@
 import { useMemo } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { MapPin, Search, Plus } from "lucide-react";
+import { MapPin, Plus, Sparkles, AlertTriangle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchCategories, fetchProducts } from "../api/ecommApi";
 import { useCart } from "../context/CartContext";
-import { usePincodeForCatalog } from "../hooks/usePincodeForCatalog";
+import { useLocation as useShopLocation } from "../context/LocationContext";
 import { formatInr } from "../lib/format";
 import type { Category, Product } from "../types";
 import { cn } from "@/lib/utils";
@@ -44,11 +42,24 @@ function CategoryPill({
 }
 
 function ProductCard({ p, onAdd, detailTo }: { p: Product; onAdd: () => void; detailTo: string }) {
+  const sell = p.selling_amount ?? p.mrp_amount;
+  const hasDiscount = p.selling_amount != null && p.selling_amount < p.mrp_amount;
+  const discountPct = hasDiscount ? Math.round(((p.mrp_amount - sell) / p.mrp_amount) * 100) : 0;
   return (
     <Card className="overflow-hidden border-border shadow-soft hover:shadow-card transition-shadow h-full flex flex-col">
       <Link to={detailTo} className="block shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset rounded-t-xl">
         <div className="aspect-square bg-muted relative">
           <img src={p.image} alt="" className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+          {hasDiscount && (
+            <span className="absolute top-2 left-2 bg-emerald-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
+              {discountPct}% OFF
+            </span>
+          )}
+          {p.is_best_seller && (
+            <span className="absolute top-2 right-2 bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded inline-flex items-center gap-0.5">
+              <Sparkles className="h-2.5 w-2.5" /> Best
+            </span>
+          )}
         </div>
       </Link>
       <CardContent className="p-3 sm:p-4 flex flex-col flex-1 gap-2">
@@ -56,7 +67,12 @@ function ProductCard({ p, onAdd, detailTo }: { p: Product; onAdd: () => void; de
           <h3 className="font-display font-semibold text-sm sm:text-base leading-snug line-clamp-2 group-hover:text-primary transition-colors">
             {p.name}
           </h3>
-          <p className="text-base sm:text-lg font-bold text-primary mt-1">{formatInr(p.mrp_amount)}</p>
+          <div className="flex items-baseline gap-2 mt-1 flex-wrap">
+            <span className="text-base sm:text-lg font-bold text-primary">{formatInr(sell)}</span>
+            {hasDiscount && (
+              <span className="text-xs text-muted-foreground line-through">{formatInr(p.mrp_amount)}</span>
+            )}
+          </div>
         </Link>
         <Button className="w-full" size="sm" onClick={onAdd}>
           <Plus className="h-4 w-4" />
@@ -70,10 +86,12 @@ function ProductCard({ p, onAdd, detailTo }: { p: Product; onAdd: () => void; de
 export default function ShopProductsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const categoryId = searchParams.get("category") ?? "";
+  const subcategoryId = searchParams.get("subcategory") ?? "";
   const search = searchParams.get("q") ?? "";
   const { addItem } = useCart();
-  const { profilePin, pincodeForApi, draftPin, setDraftPin, applyGuestPin, productDetailSearch, usesProfilePin } =
-    usePincodeForCatalog();
+  const { location, openModal } = useShopLocation();
+  const pincodeForApi = location?.pincode;
+  const productDetailSearch = "";
 
   const categoriesQuery = useQuery({
     queryKey: ["ecomm", "categories", pincodeForApi ?? ""],
@@ -94,83 +112,81 @@ export default function ShopProductsPage() {
     const next = new URLSearchParams(searchParams);
     if (id) next.set("category", id);
     else next.delete("category");
+    next.delete("subcategory");
     setSearchParams(next);
   };
 
-  const setSearch = (q: string) => {
+  const setSubcategory = (id: string) => {
     const next = new URLSearchParams(searchParams);
-    if (q.trim()) next.set("q", q.trim());
-    else next.delete("q");
+    if (id) next.set("subcategory", id);
+    else next.delete("subcategory");
     setSearchParams(next);
   };
 
   const categories = categoriesQuery.data ?? [];
-  const products = productsQuery.data ?? [];
+  const allProducts = productsQuery.data ?? [];
+  const products = subcategoryId
+    ? allProducts.filter((p) => p.subcategory_id === subcategoryId)
+    : allProducts;
+  const bestSellers = allProducts.filter((p) => p.is_best_seller).slice(0, 8);
+  const activeCategory = categories.find((c) => c.id === categoryId);
+  const subcategories = activeCategory?.subcategories ?? [];
 
   const onAddProduct = (p: Product) => {
     addItem({
       productId: p.id,
       name: p.name,
       image: p.image,
-      unitPrice: p.mrp_amount,
+      unitPrice: p.selling_amount ?? p.mrp_amount,
       quantity: 1,
     });
     toast.success(`${p.name} added to cart`);
   };
 
-  const gridKey = useMemo(() => `${categoryId}-${search}-${pincodeForApi ?? ""}`, [categoryId, search, pincodeForApi]);
-
-  const onApplyPin = () => {
-    const r = applyGuestPin();
-    if (!r.ok) toast.error(r.reason);
-  };
+  const gridKey = useMemo(
+    () => `${categoryId}-${subcategoryId}-${search}-${pincodeForApi ?? ""}`,
+    [categoryId, subcategoryId, search, pincodeForApi],
+  );
 
   return (
     <div className="space-y-5 sm:space-y-6">
-      <div>
-        <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground">Shop</h1>
-        <p className="text-muted-foreground text-sm sm:text-base mt-1 max-w-2xl">
-          Prices use your delivery PIN when signed in, or enter a PIN below as a guest.
-        </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground">Shop</h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            {search ? <>Results for <span className="font-semibold text-foreground">"{search}"</span></> : "Curated kids' essentials, delivered."}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={openModal}
+          className={cn(
+            "flex items-center gap-2 text-sm rounded-xl px-3 py-2 border shadow-soft transition-colors",
+            location?.serviceable === false
+              ? "border-amber-400/60 bg-amber-50 text-amber-900 hover:bg-amber-100"
+              : "border-border bg-card hover:bg-muted",
+          )}
+        >
+          {location?.serviceable === false ? (
+            <AlertTriangle className="h-4 w-4 text-amber-600" />
+          ) : (
+            <MapPin className="h-4 w-4 text-primary" />
+          )}
+          <span className="font-medium truncate max-w-[220px]">
+            {location ? location.formatted_address : "Choose delivery location"}
+          </span>
+        </button>
       </div>
 
-      {usesProfilePin ? (
-        <div className="flex flex-wrap items-center gap-2 text-sm rounded-xl border border-border bg-card px-3 py-2.5 shadow-soft">
-          <MapPin className="h-4 w-4 text-primary shrink-0" />
-          <span className="text-muted-foreground">Showing prices for PIN</span>
-          <span className="font-mono font-semibold text-foreground">{profilePin}</span>
-          <span className="text-muted-foreground text-xs">(from your account address)</span>
-        </div>
-      ) : (
-        <div className="flex flex-col sm:flex-row sm:items-end gap-3 max-w-md">
-          <div className="flex-1 space-y-1.5">
-            <Label htmlFor="shop-pin">PIN code for prices</Label>
-            <Input
-              id="shop-pin"
-              inputMode="numeric"
-              maxLength={6}
-              placeholder="6-digit PIN"
-              className="h-10 font-mono"
-              value={draftPin}
-              onChange={(e) => setDraftPin(e.target.value)}
-            />
-          </div>
-          <Button type="button" variant="secondary" className="sm:mb-0.5" onClick={onApplyPin}>
-            Apply
-          </Button>
-        </div>
+      {location && !location.serviceable && (
+        <Card className="p-3 border-amber-300/60 bg-amber-50 text-amber-900 text-sm flex items-start gap-2">
+          <AlertTriangle className="h-4 w-4 mt-0.5 text-amber-600 shrink-0" />
+          <span>
+            We don't deliver to PIN <strong>{location.pincode}</strong> yet. Browse freely — we'll let you know once we
+            launch in your area.
+          </span>
+        </Card>
       )}
-
-      <div className="relative max-w-xl">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search products by name…"
-          className="pl-10 h-10 rounded-xl"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          aria-label="Search products"
-        />
-      </div>
 
       <section className="space-y-2">
         <h2 className="font-display text-sm font-semibold text-muted-foreground uppercase tracking-wide">Categories</h2>
@@ -199,8 +215,64 @@ export default function ShopProductsPage() {
         )}
       </section>
 
+      {subcategories.length > 0 && (
+        <section className="space-y-2">
+          <h2 className="font-display text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+            {activeCategory?.name} subcategories
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setSubcategory("")}
+              className={cn(
+                "rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
+                !subcategoryId ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border hover:border-primary/40",
+              )}
+            >
+              All {activeCategory?.name}
+            </button>
+            {subcategories.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => setSubcategory(s.id)}
+                className={cn(
+                  "rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
+                  subcategoryId === s.id
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-card border-border hover:border-primary/40",
+                )}
+              >
+                {s.name}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {!categoryId && !search && bestSellers.length > 0 && (
+        <section className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <h2 className="font-display text-lg sm:text-xl font-semibold">Best sellers</h2>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+            {bestSellers.map((p) => (
+              <ProductCard
+                key={p.id}
+                p={p}
+                detailTo={`/shop/products/${encodeURIComponent(p.id)}${productDetailSearch}`}
+                onAdd={() => onAddProduct(p)}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
       <section className="space-y-3">
-        <h2 className="font-display text-lg sm:text-xl font-semibold">Products</h2>
+        <h2 className="font-display text-lg sm:text-xl font-semibold">
+          {categoryId ? activeCategory?.name ?? "Products" : "All products"}
+        </h2>
         {productsQuery.isLoading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
             {Array.from({ length: 8 }).map((_, i) => (
