@@ -1,6 +1,18 @@
-import type { Category, Product } from "../types";
+import type { Category, Product, Subcategory } from "../types";
 
-const cat = (id: string, name: string, image: string): Category => ({ id, name, image });
+const cat = (
+  id: string,
+  name: string,
+  image: string,
+  subcategories: Subcategory[] = [],
+): Category => ({ id, name, image, subcategories });
+
+const sub = (id: string, name: string, category_id: string, image?: string): Subcategory => ({
+  id,
+  name,
+  category_id,
+  image,
+});
 
 function pr(
   id: string,
@@ -10,6 +22,7 @@ function pr(
   baseMrp: number,
   description: string,
   extraImages: string[],
+  opts: { selling?: number; subcategory_id?: string; bestSeller?: boolean } = {},
 ): Product {
   const images = [baseImage, ...extraImages];
   return {
@@ -19,17 +32,63 @@ function pr(
     images,
     description,
     category_id,
+    subcategory_id: opts.subcategory_id,
     mrp_amount: baseMrp,
+    selling_amount: opts.selling ?? Math.round(baseMrp * 0.85),
     is_active: true,
+    is_best_seller: opts.bestSeller ?? false,
   };
 }
 
 export const DUMMY_CATEGORIES: Category[] = [
-  cat("c-baby", "Baby Care", "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=600&q=80&auto=format&fit=crop"),
-  cat("c-feed", "Feeding", "https://images.unsplash.com/photo-1627856014751-25172f6b1d22?w=600&q=80&auto=format&fit=crop"),
-  cat("c-learn", "Learning", "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=600&q=80&auto=format&fit=crop"),
-  cat("c-safe", "Safety", "https://images.unsplash.com/photo-1584515933487-779824d29331?w=600&q=80&auto=format&fit=crop"),
-  cat("c-toys", "Toys", "https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=600&q=80&auto=format&fit=crop"),
+  cat(
+    "c-baby",
+    "Baby Care",
+    "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=600&q=80&auto=format&fit=crop",
+    [
+      sub("sc-baby-clothing", "Clothing", "c-baby"),
+      sub("sc-baby-carriers", "Carriers", "c-baby"),
+      sub("sc-baby-bath", "Bath & Skin", "c-baby"),
+    ],
+  ),
+  cat(
+    "c-feed",
+    "Feeding",
+    "https://images.unsplash.com/photo-1627856014751-25172f6b1d22?w=600&q=80&auto=format&fit=crop",
+    [
+      sub("sc-feed-bowls", "Bowls & Plates", "c-feed"),
+      sub("sc-feed-spoons", "Cutlery", "c-feed"),
+      sub("sc-feed-bibs", "Bibs", "c-feed"),
+    ],
+  ),
+  cat(
+    "c-learn",
+    "Learning",
+    "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=600&q=80&auto=format&fit=crop",
+    [
+      sub("sc-learn-blocks", "Blocks", "c-learn"),
+      sub("sc-learn-books", "Books", "c-learn"),
+    ],
+  ),
+  cat(
+    "c-safe",
+    "Safety",
+    "https://images.unsplash.com/photo-1584515933487-779824d29331?w=600&q=80&auto=format&fit=crop",
+    [
+      sub("sc-safe-guards", "Corner Guards", "c-safe"),
+      sub("sc-safe-lights", "Night Lights", "c-safe"),
+    ],
+  ),
+  cat(
+    "c-toys",
+    "Toys",
+    "https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=600&q=80&auto=format&fit=crop",
+    [
+      sub("sc-toys-plush", "Plush", "c-toys"),
+      sub("sc-toys-teether", "Teethers", "c-toys"),
+      sub("sc-toys-mats", "Play Mats", "c-toys"),
+    ],
+  ),
 ];
 
 export const DUMMY_PRODUCTS: Product[] = [
@@ -45,6 +104,7 @@ export const DUMMY_PRODUCTS: Product[] = [
       "https://images.unsplash.com/photo-1516627145497-ae6968895b74?w=800&q=80&auto=format&fit=crop",
       "https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?w=800&q=80&auto=format&fit=crop",
     ],
+    { selling: 749, subcategory_id: "sc-learn-blocks", bestSeller: true },
   ),
   pr(
     "p-2",
@@ -57,6 +117,7 @@ export const DUMMY_PRODUCTS: Product[] = [
       "https://images.unsplash.com/photo-1519689680058-324335c77eba?w=800&q=80&auto=format&fit=crop",
       "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&q=80&auto=format&fit=crop",
     ],
+    { selling: 1999, subcategory_id: "sc-baby-carriers" },
   ),
   pr(
     "p-3",
@@ -69,6 +130,7 @@ export const DUMMY_PRODUCTS: Product[] = [
       "https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=800&q=80&auto=format&fit=crop",
       "https://images.unsplash.com/photo-1615485925601-ef78e6d55a60?w=800&q=80&auto=format&fit=crop",
     ],
+    { selling: 349, subcategory_id: "sc-feed-bowls", bestSeller: true },
   ),
   pr(
     "p-4",
@@ -81,6 +143,7 @@ export const DUMMY_PRODUCTS: Product[] = [
       "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=800&q=80&auto=format&fit=crop",
       "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800&q=80&auto=format&fit=crop",
     ],
+    { selling: 499, subcategory_id: "sc-learn-books" },
   ),
   pr(
     "p-5",
@@ -92,6 +155,7 @@ export const DUMMY_PRODUCTS: Product[] = [
     [
       "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&q=80&auto=format&fit=crop",
     ],
+    { selling: 279, subcategory_id: "sc-safe-guards" },
   ),
   pr(
     "p-6",
@@ -103,6 +167,7 @@ export const DUMMY_PRODUCTS: Product[] = [
     [
       "https://images.unsplash.com/photo-1627856014751-25172f6b1d22?w=800&q=80&auto=format&fit=crop",
     ],
+    { selling: 299, subcategory_id: "sc-feed-bibs", bestSeller: true },
   ),
   pr(
     "p-7",
@@ -115,6 +180,7 @@ export const DUMMY_PRODUCTS: Product[] = [
       "https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=800&q=80&auto=format&fit=crop",
       "https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?w=800&q=80&auto=format&fit=crop",
     ],
+    { selling: 229, subcategory_id: "sc-toys-teether", bestSeller: true },
   ),
   pr(
     "p-8",
@@ -126,6 +192,7 @@ export const DUMMY_PRODUCTS: Product[] = [
     [
       "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=800&q=80&auto=format&fit=crop",
     ],
+    { selling: 999, subcategory_id: "sc-safe-lights" },
   ),
   pr(
     "p-9",
@@ -137,6 +204,7 @@ export const DUMMY_PRODUCTS: Product[] = [
     [
       "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=800&q=80&auto=format&fit=crop",
     ],
+    { selling: 599, subcategory_id: "sc-baby-clothing", bestSeller: true },
   ),
   pr(
     "p-10",
@@ -149,6 +217,7 @@ export const DUMMY_PRODUCTS: Product[] = [
       "https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=800&q=80&auto=format&fit=crop",
       "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=800&q=80&auto=format&fit=crop",
     ],
+    { selling: 549, subcategory_id: "sc-toys-plush" },
   ),
   pr(
     "p-11",
@@ -160,6 +229,7 @@ export const DUMMY_PRODUCTS: Product[] = [
     [
       "https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=800&q=80&auto=format&fit=crop",
     ],
+    { selling: 199, subcategory_id: "sc-feed-spoons" },
   ),
   pr(
     "p-12",
@@ -172,6 +242,7 @@ export const DUMMY_PRODUCTS: Product[] = [
       "https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=800&q=80&auto=format&fit=crop",
       "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=800&q=80&auto=format&fit=crop",
     ],
+    { selling: 1499, subcategory_id: "sc-toys-mats", bestSeller: true },
   ),
 ];
 
@@ -182,7 +253,10 @@ export function applyMockPincodeToProduct(p: Product, pincode: string): Product 
   const seed = parseInt(digits.slice(-3), 10) % 50;
   const delta = seed - 25;
   const mrp = Math.max(1, Math.round(p.mrp_amount + delta));
-  return { ...p, mrp_amount: mrp };
+  const sell = p.selling_amount
+    ? Math.max(1, Math.round(p.selling_amount + delta))
+    : undefined;
+  return { ...p, mrp_amount: mrp, selling_amount: sell };
 }
 
 export function getDummyProductById(id: string): Product | undefined {

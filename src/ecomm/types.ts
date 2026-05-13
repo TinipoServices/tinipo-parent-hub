@@ -1,21 +1,39 @@
 export interface CustomerAddress {
+  /** Optional id when stored in the user's address book. */
+  id?: string;
+  /** Human label e.g. Home, Office. */
+  label?: string;
   line1: string;
   line2?: string;
   city: string;
   state: string;
   pincode: string;
+  /** Whether this is the default delivery address. */
+  is_default?: boolean;
 }
 
 export interface ShopUser {
   name: string;
   phone: string;
+  /** Primary / currently selected address (kept for backwards compat). */
   address: CustomerAddress;
+  /** Address book — multi-address support. */
+  addresses?: CustomerAddress[];
 }
 
 export interface Category {
   id: string;
   name: string;
   image: string;
+  /** Optional grouped subcategories. */
+  subcategories?: Subcategory[];
+}
+
+export interface Subcategory {
+  id: string;
+  name: string;
+  category_id: string;
+  image?: string;
 }
 
 export interface Product {
@@ -27,8 +45,15 @@ export interface Product {
   images?: string[];
   description?: string;
   category_id: string;
+  /** Optional subcategory id. */
+  subcategory_id?: string;
+  /** MRP shown struck-through. */
   mrp_amount: number;
+  /** Actual selling price. Falls back to MRP if absent. */
+  selling_amount?: number;
   is_active: boolean;
+  /** Marketing flag — surfaced in "Best Selling" rail. */
+  is_best_seller?: boolean;
 }
 
 export type OrderStatus =
