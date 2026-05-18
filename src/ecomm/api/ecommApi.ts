@@ -93,10 +93,6 @@ function normalizeProduct(p: Product): Product {
 }
 
 export async function requestOtp(body: Record<string, unknown>): Promise<void> {
-  if (isEcommMockMode()) {
-    await new Promise((r) => setTimeout(r, 400));
-    return;
-  }
   console.log("request otp functon",body)
   const res = await fetch(apiUrl(OTP_GENERATE_PATH), {
     method: "POST",
@@ -108,14 +104,6 @@ export async function requestOtp(body: Record<string, unknown>): Promise<void> {
 }
 
 export async function validateOtp(body: Record<string, unknown>): Promise<{ token: string | null; raw: unknown }> {
-  if (isEcommMockMode()) {
-    await new Promise((r) => setTimeout(r, 500));
-    const otp = String(body.otp ?? "");
-    if (otp.length !== 6) {
-      throw new Error("Enter a 6-digit OTP (preview mode accepts any 6 digits).");
-    }
-    return { token: "mock-jwt-token", raw: { access: "mock-jwt-token", ...body } };
-  }
   const res = await fetch(apiUrl(OTP_VALIDATE_PATH), {
     method: "POST",
     headers: { Accept: "application/json", "Content-Type": "application/json" },
@@ -126,18 +114,30 @@ export async function validateOtp(body: Record<string, unknown>): Promise<{ toke
   return { token: extractAccessToken(raw), raw };
 }
 
+const transformCategoryResponse = (data) =>{
+  const list = Array.isArray(data)
+    ? data
+    : data.results || [];
+
+  return list.map((item) => ({
+    ...item,
+    image: item.media_url,
+  }));
+
+}
+
 export async function fetchCategories(pincode?: string): Promise<Category[]> {
-  if (isEcommMockMode()) {
-    await new Promise((r) => setTimeout(r, 200));
-    return sortedCategories(DUMMY_CATEGORIES);
-  }
   const sp = new URLSearchParams();
   appendPincode(sp, pincode);
   const q = sp.toString();
   const url = `${apiUrl(CATALOG_CATEGORIES_PATH)}${q ? `?${q}` : ""}`;
+  console.log(url)
   const res = await fetch(url, { headers: authHeaders() });
-  const data = await parseJson<unknown>(res);
+  console.log("category_api",res)
+  let data = await parseJson<unknown>(res);
   if (!res.ok) throw new Error((data as { detail?: string }).detail ?? "Failed to load categories");
+  data = transformCategoryResponse(data)
+  console.log("data........",data)
   return sortedCategories(unwrapList<Category>(data));
 }
 
@@ -148,19 +148,20 @@ export async function fetchProducts(params: {
 }): Promise<Product[]> {
   const pin = sanitizePincode(params.pincode);
 
-  if (isEcommMockMode()) {
-    await new Promise((r) => setTimeout(r, 200));
-    let list = DUMMY_PRODUCTS.filter((p) => p.is_active);
-    if (params.categoryId) list = list.filter((p) => p.category_id === params.categoryId);
-    if (params.search?.trim()) {
-      const q = params.search.trim().toLowerCase();
-      list = list.filter((p) => p.name.toLowerCase().includes(q));
-    }
-    const mapped = pin ? list.map((p) => applyMockPincodeToProduct(p, pin)) : list;
-    return sortedProducts(mapped.map(normalizeProduct));
-  }
+  // if (isEcommMockMode()) {
+  //   await new Promise((r) => setTimeout(r, 200));
+  //   let list = DUMMY_PRODUCTS.filter((p) => p.is_active);
+  //   if (params.categoryId) list = list.filter((p) => p.category_id === params.categoryId);
+  //   if (params.search?.trim()) {
+  //     const q = params.search.trim().toLowerCase();
+  //     list = list.filter((p) => p.name.toLowerCase().includes(q));
+  //   }
+  //   const mapped = pin ? list.map((p) => applyMockPincodeToProduct(p, pin)) : list;
+  //   return sortedProducts(mapped.map(normalizeProduct));
+  // }
+  console.log("category_id",params.categoryId)
   const sp = new URLSearchParams();
-  if (params.categoryId) sp.set("category", params.categoryId);
+  if (params.categoryId) sp.set("category_id", params.categoryId);
   if (params.search?.trim()) sp.set("search", params.search.trim());
   appendPincode(sp, params.pincode);
   const q = sp.toString();

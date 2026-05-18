@@ -4,7 +4,7 @@
  * Documented REST shapes are assumptions for the frontend; align response keys with Django when wiring.
  */
 //export const ECOMM_API_BASE = "https://sandbox-backend.tinipo.in";
-export const ECOMM_API_BASE = "http://localhost:8000";
+export const ECOMM_API_BASE = "http://localhost:8001";
 
 /** Auth (given) */
 export const OTP_GENERATE_PATH = "/otp/generate/";
@@ -19,8 +19,8 @@ export const OTP_VALIDATE_PATH = "/otp/validate/";
  * - GET  /api/orders/                 → { results: OrderSummary[] }
  * - GET  /api/orders/<id>/            → OrderDetail
  */
-export const CATALOG_CATEGORIES_PATH = "/api/catalog/categories/";
-export const CATALOG_PRODUCTS_PATH = "/api/catalog/products/";
+export const CATALOG_CATEGORIES_PATH = "/api/ecomm/product_variant/category_list/";
+export const CATALOG_PRODUCTS_PATH = "/api/ecomm/product_variant/";
 export const ORDERS_CONFIRM_PATH = "/api/orders/confirm/";
 export const ORDERS_LIST_PATH = "/api/orders/";
 
