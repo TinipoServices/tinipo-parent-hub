@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { MapPin, Plus, Sparkles, AlertTriangle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -85,6 +85,7 @@ function ProductCard({ p, onAdd, detailTo }: { p: Product; onAdd: () => void; de
 
 export default function ShopProductsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const categoryId = searchParams.get("category") ?? "";
   const subcategoryId = searchParams.get("subcategory") ?? "";
   const search = searchParams.get("q") ?? "";
@@ -109,18 +110,21 @@ export default function ShopProductsPage() {
   });
 
   const setCategory = (id: string) => {
+    if (id) {
+      navigate(`/shop/c/${encodeURIComponent(id)}`);
+      return;
+    }
     const next = new URLSearchParams(searchParams);
-    if (id) next.set("category", id);
-    else next.delete("category");
+    next.delete("category");
     next.delete("subcategory");
     setSearchParams(next);
   };
 
   const setSubcategory = (id: string) => {
-    const next = new URLSearchParams(searchParams);
-    if (id) next.set("subcategory", id);
-    else next.delete("subcategory");
-    setSearchParams(next);
+    if (categoryId) {
+      const qs = id ? `?subcategory=${encodeURIComponent(id)}` : "";
+      navigate(`/shop/c/${encodeURIComponent(categoryId)}${qs}`);
+    }
   };
 
   const categories = categoriesQuery.data ?? [];
