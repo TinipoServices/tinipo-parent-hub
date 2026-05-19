@@ -1,6 +1,6 @@
 import {
   apiUrl,
-  catalogProductDetailPath,
+  CATALOG_PRODUCT_DETAIL_PATH,
   CATALOG_CATEGORIES_PATH,
   CATALOG_PRODUCTS_PATH,
   isEcommMockMode,
@@ -84,11 +84,11 @@ function appendPincode(sp: URLSearchParams, pincode: string | undefined) {
 }
 
 function normalizeProduct(p: Product): Product {
-  const imgs = p.images?.length ? [...p.images] : p.image ? [p.image] : [];
+  const imgs = p.media?.length ? [...p.media] : p.media_url ? [p.media_url] : [];
   return {
     ...p,
-    image: p.image || imgs[0] || "",
-    images: imgs.length > 0 ? imgs : undefined,
+    media_url: p.media_url || imgs[0] || "",
+    media: imgs.length > 0 ? imgs : undefined,
   };
 }
 
@@ -121,7 +121,7 @@ const transformCategoryResponse = (data) =>{
 
   return list.map((item) => ({
     ...item,
-    image: item.media_url,
+    media_url: item.media_url,
   }));
 
 }
@@ -179,17 +179,19 @@ export async function fetchProducts(params: {
 export async function fetchProductDetail(productId: string, pincode?: string): Promise<Product> {
   const pin = sanitizePincode(pincode);
 
-  if (isEcommMockMode()) {
-    await new Promise((r) => setTimeout(r, 200));
-    const raw = getDummyProductById(productId);
-    if (!raw) throw new Error("Product not found");
-    const adjusted = pin ? applyMockPincodeToProduct(raw, pin) : raw;
-    return normalizeProduct(adjusted);
-  }
+  // if (isEcommMockMode()) {
+  //   await new Promise((r) => setTimeout(r, 200));
+  //   const raw = getDummyProductById(productId);
+  //   if (!raw) throw new Error("Product not found");
+  //   const adjusted = pin ? applyMockPincodeToProduct(raw, pin) : raw;
+  //   return normalizeProduct(adjusted);
+  // }
   const sp = new URLSearchParams();
+  sp.append("variant_id", productId);
   appendPincode(sp, pincode);
   const q = sp.toString();
-  const url = `${apiUrl(catalogProductDetailPath(productId))}${q ? `?${q}` : ""}`;
+  const url = `${apiUrl(CATALOG_PRODUCT_DETAIL_PATH)}${q ? `?${q}` : ""}`;
+  console.log("product_detail_url",url)
   const res = await fetch(url, { headers: authHeaders() });
   const data = await parseJson<Product>(res);
   if (!res.ok) throw new Error((data as unknown as { detail?: string }).detail ?? "Failed to load product");
@@ -201,24 +203,24 @@ export async function confirmOrder(payload: {
   address: CustomerAddress;
   payment_mode?: string;
 }): Promise<OrderDetail> {
-  if (isEcommMockMode()) {
-    await new Promise((r) => setTimeout(r, 500));
-    const products = DUMMY_PRODUCTS;
-    const resolved = payload.lines.map((line) => {
-      const p = products.find((x) => x.id === line.product_id);
-      return {
-        product_id: line.product_id,
-        name: p?.name ?? "Product",
-        image: p?.image ?? "",
-        mrp: p?.mrp_amount ?? 0,
-        quantity: line.quantity,
-      };
-    });
-    const payable = resolved.reduce((s, l) => s + l.mrp * l.quantity, 0);
-    const order = buildMockOrderFromCart({ lines: resolved, address: payload.address, payable });
-    appendMockOrder(order);
-    return order;
-  }
+  // if (isEcommMockMode()) {
+  //   await new Promise((r) => setTimeout(r, 500));
+  //   const products = DUMMY_PRODUCTS;
+  //   const resolved = payload.lines.map((line) => {
+  //     const p = products.find((x) => x.id === line.product_id);
+  //     return {
+  //       product_id: line.product_id,
+  //       name: p?.name ?? "Product",
+  //       media_url: p?.media_url ?? "",
+  //       mrp: p?.mrp ?? 0,
+  //       quantity: line.quantity,
+  //     };
+  //   });
+  //   const payable = resolved.reduce((s, l) => s + l.mrp * l.quantity, 0);
+  //   const order = buildMockOrderFromCart({ lines: resolved, address: payload.address, payable });
+  //   appendMockOrder(order);
+  //   return order;
+  // }
   const res = await fetch(apiUrl(ORDERS_CONFIRM_PATH), {
     method: "POST",
     headers: authHeaders(),
@@ -287,14 +289,14 @@ export function seedDummyOrdersIfEmpty(user: ShopUser) {
       {
         product_id: "p-3",
         name: "Bamboo Feeding Bowl",
-        image: DUMMY_PRODUCTS.find((p) => p.id === "p-3")?.image ?? "",
+        media_url: DUMMY_PRODUCTS.find((p) => p.id === "p-3")?.media_url ?? "",
         mrp: 449,
         quantity: 2,
       },
       {
         product_id: "p-7",
         name: "Musical Teether",
-        image: DUMMY_PRODUCTS.find((p) => p.id === "p-7")?.image ?? "",
+        media_url: DUMMY_PRODUCTS.find((p) => p.id === "p-7")?.media_url ?? "",
         mrp: 299,
         quantity: 2,
       },

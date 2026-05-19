@@ -3,15 +3,15 @@ import type { Category, Product, Subcategory } from "../types";
 const cat = (
   id: string,
   name: string,
-  image: string,
+  media_url: string,
   subcategories: Subcategory[] = [],
-): Category => ({ id, name, image, subcategories });
+): Category => ({ id, name, media_url, subcategories });
 
-const sub = (id: string, name: string, category_id: string, image?: string): Subcategory => ({
+const sub = (id: string, name: string, category_id: string, media_url?: string): Subcategory => ({
   id,
   name,
   category_id,
-  image,
+  media_url,
 });
 
 function pr(
@@ -24,16 +24,16 @@ function pr(
   extraImages: string[],
   opts: { selling?: number; subcategory_id?: string; bestSeller?: boolean } = {},
 ): Product {
-  const images = [baseImage, ...extraImages];
+  const media = [baseImage, ...extraImages];
   return {
     id,
     name,
-    image: baseImage,
-    images,
+    media_url: baseImage,
+    media,
     description,
     category_id,
     subcategory_id: opts.subcategory_id,
-    mrp_amount: baseMrp,
+    mrp: baseMrp,
     selling_amount: opts.selling ?? Math.round(baseMrp * 0.85),
     is_active: true,
     is_best_seller: opts.bestSeller ?? false,
@@ -252,11 +252,11 @@ export function applyMockPincodeToProduct(p: Product, pincode: string): Product 
   if (digits.length < 6) return p;
   const seed = parseInt(digits.slice(-3), 10) % 50;
   const delta = seed - 25;
-  const mrp = Math.max(1, Math.round(p.mrp_amount + delta));
-  const sell = p.selling_amount
-    ? Math.max(1, Math.round(p.selling_amount + delta))
+  const mrp = Math.max(1, Math.round(p.price.mrp + delta));
+  const sell = p.price.selling_price
+    ? Math.max(1, Math.round(p.price.selling_price + delta))
     : undefined;
-  return { ...p, mrp_amount: mrp, selling_amount: sell };
+  return { ...p, mrp: mrp, selling_amount: sell };
 }
 
 export function getDummyProductById(id: string): Product | undefined {

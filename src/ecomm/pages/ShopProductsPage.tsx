@@ -32,7 +32,7 @@ function CategoryPill({
       )}
     >
       <div className="h-11 sm:h-12 w-full bg-muted relative">
-        <img src={c.image} alt="" className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+        <img src={c.media_url} alt="" className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
       </div>
       <p className="font-medium text-[10px] sm:text-[11px] leading-tight line-clamp-2 px-1 py-1.5 min-h-[2.25rem] flex items-center justify-center">
         {c.name}
@@ -42,14 +42,14 @@ function CategoryPill({
 }
 
 function ProductCard({ p, onAdd, detailTo }: { p: Product; onAdd: () => void; detailTo: string }) {
-  const sell = p.selling_amount ?? p.mrp_amount;
-  const hasDiscount = p.selling_amount != null && p.selling_amount < p.mrp_amount;
-  const discountPct = hasDiscount ? Math.round(((p.mrp_amount - sell) / p.mrp_amount) * 100) : 0;
+  const sell = p.price.selling_price ?? p.price.mrp;
+  const hasDiscount = p.price.selling_price != null && p.price.selling_price < p.price.mrp;
+  const discountPct = hasDiscount ? Math.round(((p.price.mrp - sell) / p.price.mrp) * 100) : 0;
   return (
     <Card className="overflow-hidden border-border shadow-soft hover:shadow-card transition-shadow h-full flex flex-col">
       <Link to={detailTo} className="block shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset rounded-t-xl">
         <div className="aspect-square bg-muted relative">
-          <img src={p.image} alt="" className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+          <img src={p.media_url} alt="" className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
           {hasDiscount && (
             <span className="absolute top-2 left-2 bg-emerald-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
               {discountPct}% OFF
@@ -70,7 +70,7 @@ function ProductCard({ p, onAdd, detailTo }: { p: Product; onAdd: () => void; de
           <div className="flex items-baseline gap-2 mt-1 flex-wrap">
             <span className="text-base sm:text-lg font-bold text-primary">{formatInr(sell)}</span>
             {hasDiscount && (
-              <span className="text-xs text-muted-foreground line-through">{formatInr(p.mrp_amount)}</span>
+              <span className="text-xs text-muted-foreground line-through">{formatInr(p.price.mrp)}</span>
             )}
           </div>
         </Link>
@@ -140,8 +140,8 @@ export default function ShopProductsPage() {
     addItem({
       productId: p.id,
       name: p.name,
-      image: p.image,
-      unitPrice: p.selling_amount ?? p.mrp_amount,
+      media_url: p.media_url,
+      unitPrice: p.price.selling_price ?? p.price.mrp,
       quantity: 1,
     });
     toast.success(`${p.name} added to cart`);

@@ -21,6 +21,7 @@ export const OTP_VALIDATE_PATH = "/otp/validate/";
  */
 export const CATALOG_CATEGORIES_PATH = "/api/ecomm/product_variant/category_list/";
 export const CATALOG_PRODUCTS_PATH = "/api/ecomm/product_variant/";
+export const CATALOG_PRODUCT_DETAIL_PATH = "/api/ecomm/product_variant/variant_detail";
 export const ORDERS_CONFIRM_PATH = "/api/orders/confirm/";
 export const ORDERS_LIST_PATH = "/api/orders/";
 
@@ -28,9 +29,9 @@ export function orderDetailPath(orderId: string): string {
   return `/api/orders/${orderId}/`;
 }
 
-export function catalogProductDetailPath(productId: string): string {
-  return `/api/catalog/products/${encodeURIComponent(productId)}/`;
-}
+// export function catalogProductDetailPath(productId: string): string {
+//   return `/api/ecomm/product_variant/detail/${encodeURIComponent(productId)}/`;
+// }
 
 /** When not "false", catalog/orders use local dummy data + localStorage for orders. Set VITE_ECOMM_USE_MOCK=false to call the real API. */
 export function isEcommMockMode(): boolean {

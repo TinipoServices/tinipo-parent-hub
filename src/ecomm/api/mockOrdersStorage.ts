@@ -31,7 +31,7 @@ export function appendMockOrder(order: OrderDetail) {
 }
 
 export function buildMockOrderFromCart(params: {
-  lines: { product_id: string; name: string; image: string; mrp: number; quantity: number }[];
+  lines: { product_id: string; name: string; media_url: string; mrp: number; quantity: number }[];
   address: CustomerAddress;
   payable: number;
 }): OrderDetail {
@@ -51,7 +51,7 @@ export function buildMockOrderFromCart(params: {
     lines: params.lines.map((l) => ({
       product_id: l.product_id,
       name: l.name,
-      image: l.image,
+      media_url: l.media_url,
       mrp: l.mrp,
       quantity: l.quantity,
     })),

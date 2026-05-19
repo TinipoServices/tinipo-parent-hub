@@ -14,14 +14,14 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 function ProductRow({ p, onAdd, detailTo }: { p: Product; onAdd: () => void; detailTo: string }) {
-  const sell = p.selling_amount ?? p.mrp_amount;
-  const hasDiscount = p.selling_amount != null && p.selling_amount < p.mrp_amount;
-  const discountPct = hasDiscount ? Math.round(((p.mrp_amount - sell) / p.mrp_amount) * 100) : 0;
+  const sell = p.price.selling_price ?? p.price.mrp;
+  const hasDiscount = p.price.selling_price != null && p.price.selling_price < p.price.mrp;
+  const discountPct = hasDiscount ? Math.round(((p.price.mrp - sell) / p.price.mrp) * 100) : 0;
   return (
     <Card className="overflow-hidden border-border shadow-soft hover:shadow-card transition-shadow flex flex-col">
       <Link to={detailTo} className="block shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-t-xl">
         <div className="aspect-square bg-muted relative">
-          <img src={p.image} alt="" className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+          <img src={p.media_url} alt="" className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
           {hasDiscount && (
             <span className="absolute top-2 left-2 bg-emerald-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
               {discountPct}% OFF
@@ -42,7 +42,7 @@ function ProductRow({ p, onAdd, detailTo }: { p: Product; onAdd: () => void; det
           <div className="flex items-baseline gap-2 mt-1 flex-wrap">
             <span className="text-sm sm:text-base font-bold text-primary">{formatInr(sell)}</span>
             {hasDiscount && (
-              <span className="text-[11px] text-muted-foreground line-through">{formatInr(p.mrp_amount)}</span>
+              <span className="text-[11px] text-muted-foreground line-through">{formatInr(p.price.mrp)}</span>
             )}
           </div>
         </Link>
@@ -68,25 +68,48 @@ export default function ShopCategoryPage() {
     queryFn: () => fetchCategories(pincodeForApi),
   });
 
+  // const productsQuery = useQuery({
+  //   queryKey: ["ecomm", "products", categoryId, "", pincodeForApi ?? ""],
+  //   queryFn: () =>
+  //     fetchProducts({
+  //       categoryId: categoryId || undefined,
+  //       pincode: pincodeForApi,
+  //     }),
+  //   enabled: !!categoryId,
+  // });
+
   const productsQuery = useQuery({
-    queryKey: ["ecomm", "products", categoryId, "", pincodeForApi ?? ""],
+    queryKey: [
+      "ecomm",
+      "products",
+      categoryId,
+      subcategoryId,
+      pincodeForApi ?? "",
+    ],
+  
     queryFn: () =>
       fetchProducts({
-        categoryId: categoryId || undefined,
+        categoryId: subcategoryId || categoryId || undefined,
         pincode: pincodeForApi,
       }),
+  
     enabled: !!categoryId,
   });
 
   const categories = categoriesQuery.data ?? [];
-  const activeCategory = categories.find((c) => c.id === categoryId);
+  const activeCategory = categories.find(
+    (c) => Number(c.id) === Number(categoryId)
+  );
   const subcategories = activeCategory?.subcategories ?? [];
 
-  const allProducts = productsQuery.data ?? [];
-  const products = useMemo(
-    () => (subcategoryId ? allProducts.filter((p) => p.subcategory_id === subcategoryId) : allProducts),
-    [allProducts, subcategoryId],
-  );
+
+  // const allProducts = productsQuery.data ?? [];
+  // const products = useMemo(
+  //   () => (subcategoryId ? allProducts.filter((p) => p.subcategory_id === subcategoryId) : allProducts),
+  //   [allProducts, subcategoryId],
+  // );
+
+  const products = productsQuery.data ?? [];
 
   const setSubcategory = (id: string) => {
     const next = new URLSearchParams(searchParams);
@@ -156,8 +179,8 @@ export default function ShopCategoryPage() {
                       )}
                     >
                       <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-lg bg-muted overflow-hidden">
-                        {s.image ? (
-                          <img src={s.image} alt="" className="w-full h-full object-cover" loading="lazy" />
+                        {s.media_url ? (
+                          <img src={s.media_url} alt="" className="w-full h-full object-cover" loading="lazy" />
                         ) : (
                           <div className="w-full h-full bg-gradient-to-br from-primary/15 to-primary/5" />
                         )}
@@ -207,8 +230,8 @@ export default function ShopCategoryPage() {
                     addItem({
                       productId: p.id,
                       name: p.name,
-                      image: p.image,
-                      unitPrice: p.selling_amount ?? p.mrp_amount,
+                      media_url: p.media_url,
+                      unitPrice: p.price.selling_price ?? p.price.mrp,
                       quantity: 1,
                     });
                     toast.success(`${p.name} added to cart`);

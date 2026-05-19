@@ -29,7 +29,12 @@ export default function ShopProductDetailPage() {
   const p = detailQuery.data;
   const gallery = useMemo(() => {
     if (!p) return [];
-    return p.images?.length ? p.images : p.image ? [p.image] : [];
+  
+    if (p.media?.length) {
+      return p.media.map((m) => m.media_url);
+    }
+  
+    return p.media_url ? [p.media_url] : [];
   }, [p]);
 
   const mainSrc = gallery[activeIdx] ?? gallery[0];
@@ -44,11 +49,15 @@ export default function ShopProductDetailPage() {
 
   const addToCart = () => {
     if (!p) return;
-    const sell = p.selling_amount ?? p.mrp_amount;
+    const sell = Number(
+      p?.price?.selling_price ??
+      p?.price?.mrp ??
+      0
+    );
     addItem({
       productId: p.id,
       name: p.name,
-      image: p.image,
+      media_url: p.media_url,
       unitPrice: sell,
       quantity: qty,
     });
@@ -139,24 +148,76 @@ export default function ShopProductDetailPage() {
           </div>
 
           <div className="space-y-5 min-w-0">
-            <div>
+            {/* <div>
               <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground leading-tight">{p.name}</h1>
               {(() => {
-                const sell = p.selling_amount ?? p.mrp_amount;
-                const hasDiscount = p.selling_amount != null && p.selling_amount < p.mrp_amount;
-                const pct = hasDiscount ? Math.round(((p.mrp_amount - sell) / p.mrp_amount) * 100) : 0;
+                const sell = Number(p?.price?.selling_price ?? p.price.mrp);
+                const hasDiscount = p.price.selling_price != null && p.price.selling_price < p.price.mrp;
+                const pct = hasDiscount ? Math.round(((p.price.mrp - sell) / p.price.mrp) * 100) : 0;
                 return (
                   <div className="mt-3 space-y-1">
                     <div className="flex flex-wrap items-baseline gap-3">
                       <span className="text-2xl sm:text-3xl font-bold text-primary">{formatInr(sell)}</span>
                       {hasDiscount && (
                         <>
-                          <span className="text-base text-muted-foreground line-through">{formatInr(p.mrp_amount)}</span>
+                          <span className="text-base text-muted-foreground line-through">{formatInr(p.price.mrp)}</span>
                           <span className="text-sm font-bold text-emerald-600">{pct}% off</span>
                         </>
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground">Inclusive of all taxes</p>
+                  </div>
+                );
+              })()}
+            </div> */}
+
+            <div>
+              <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground leading-tight">
+                {p?.name}
+              </h1>
+
+              {(() => {
+                const mrp = Number(p?.price?.mrp ?? 0);
+
+                const sellingPrice =
+                  p?.price?.selling_price != null
+                    ? Number(p.price.selling_price)
+                    : null;
+
+                const sell = sellingPrice ?? mrp;
+
+                const hasDiscount =
+                  sellingPrice != null &&
+                  sellingPrice < mrp;
+
+                const pct =
+                  hasDiscount && mrp > 0
+                    ? Math.round(((mrp - sell) / mrp) * 100)
+                    : 0;
+
+                return (
+                  <div className="mt-3 space-y-1">
+                    <div className="flex flex-wrap items-baseline gap-3">
+                      <span className="text-2xl sm:text-3xl font-bold text-primary">
+                        {formatInr(sell)}
+                      </span>
+
+                      {hasDiscount && (
+                        <>
+                          <span className="text-base text-muted-foreground line-through">
+                            {formatInr(mrp)}
+                          </span>
+
+                          <span className="text-sm font-bold text-emerald-600">
+                            {pct}% off
+                          </span>
+                        </>
+                      )}
+                    </div>
+
+                    <p className="text-xs text-muted-foreground">
+                      Inclusive of all taxes
+                    </p>
                   </div>
                 );
               })()}
@@ -166,7 +227,7 @@ export default function ShopProductDetailPage() {
               <CardContent className="p-4 sm:p-5 space-y-3">
                 <h2 className="font-display font-semibold text-base">About this item</h2>
                 <p className="text-sm sm:text-base text-muted-foreground leading-relaxed whitespace-pre-line">
-                  {p.description ?? "No description available for this product yet."}
+                  {p.product.description ?? "No description available for this product yet."}
                 </p>
               </CardContent>
             </Card>
