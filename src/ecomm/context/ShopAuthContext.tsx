@@ -190,6 +190,7 @@ export function ShopAuthProvider({ children }: { children: ReactNode }) {
           return;
         }
         const fromApi = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+        console.log("Address",fromApi)
         const addr = fromApi.address as CustomerAddress | undefined;
         const name = typeof fromApi.name === "string" ? fromApi.name : "Customer";
         if (addr && addr.line1 && addr.city && addr.state && addr.pincode) {

@@ -111,7 +111,7 @@ export async function validateOtp(body: Record<string, unknown>): Promise<{ toke
   });
   const raw = await parseJson<unknown>(res);
   if (!res.ok) throw new Error((raw as { detail?: string }).detail ?? `OTP validate failed (${res.status})`);
-  return { token: extractAccessToken(raw), raw };
+  return { token: extractAccessToken(raw), raw, };
 }
 
 const transformCategoryResponse = (data) =>{
