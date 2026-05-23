@@ -73,6 +73,43 @@ export function extractAccessToken(data: unknown): string | null {
   return null;
 }
 
+export function extractUser(data: unknown): ShopUser | null {
+  if (!data || typeof data !== "object") return null;
+
+  const root = data as Record<string, unknown>;
+  const rawUser = root.user;
+
+  if (!rawUser || typeof rawUser !== "object") return null;
+
+  const u = rawUser as Record<string, unknown>;
+
+  const addresses = Array.isArray(u.addresses)
+    ? (u.addresses as CustomerAddress[])
+    : [];
+
+  const defaultAddress =
+    addresses.find((a) => a.is_default) ??
+    addresses[0];
+
+  if (!defaultAddress) return null;
+
+  return {
+    id: Number(u.id),
+    email: String(u.email ?? ""),
+    phone_no: String(u.phone_no ?? ""),
+    name: String(u.name ?? ""),
+    gender: (u.gender as string) ?? null,
+    profile_pic: (u.profile_pic as string) ?? null,
+    active_role_type: String(u.active_role_type ?? ""),
+    is_phone_verified: Boolean(u.is_phone_verified),
+    is_otp_verified: Boolean(u.is_otp_verified),
+
+    address: defaultAddress,
+    addresses,
+  };
+}
+
+
 function sanitizePincode(pincode: string | undefined): string | undefined {
   const d = pincode?.replace(/\D/g, "") ?? "";
   return d.length === 6 ? d : undefined;
@@ -103,7 +140,7 @@ export async function requestOtp(body: Record<string, unknown>): Promise<void> {
   if (!res.ok) throw new Error((await parseJson<{ detail?: string }>(res)).detail ?? `OTP request failed (${res.status})`);
 }
 
-export async function validateOtp(body: Record<string, unknown>): Promise<{ token: string | null; raw: unknown }> {
+export async function validateOtp(body: Record<string, unknown>): Promise<{ token: string | null;user: ShopUser | null; raw: unknown }> {
   const res = await fetch(apiUrl(OTP_VALIDATE_PATH), {
     method: "POST",
     headers: { Accept: "application/json", "Content-Type": "application/json" },
@@ -111,7 +148,7 @@ export async function validateOtp(body: Record<string, unknown>): Promise<{ toke
   });
   const raw = await parseJson<unknown>(res);
   if (!res.ok) throw new Error((raw as { detail?: string }).detail ?? `OTP validate failed (${res.status})`);
-  return { token: extractAccessToken(raw), raw, };
+  return { token: extractAccessToken(raw),user: extractUser(raw), raw, };
 }
 
 const transformCategoryResponse = (data) =>{

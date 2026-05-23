@@ -8,22 +8,16 @@ import {
 } from "react";
 import type { CustomerAddress, ShopUser } from "../types";
 import { requestOtp, setStoredAccessToken, validateOtp, seedDummyOrdersIfEmpty } from "../api/ecommApi";
+import { useActionData } from "react-router-dom";
 
 const USER_KEY = "tinipo_shop_user";
 
 function ensureAddressIds(u: ShopUser): ShopUser {
   // Backfill addresses[] from primary address for users created before multi-address support.
-  const list = u.addresses && u.addresses.length > 0 ? u.addresses : [u.address];
-  const withIds = list.map((a, i) => ({
-    ...a,
-    id: a.id || `addr-${Date.now()}-${i}`,
-    label: a.label || (i === 0 ? "Home" : `Address ${i + 1}`),
-    is_default: a.is_default ?? i === 0,
-  }));
+  const user_addresses = u.addresses && u.addresses.length > 0 ? u.addresses : [u.address];
   // Make sure exactly one default exists.
-  if (!withIds.some((a) => a.is_default)) withIds[0].is_default = true;
-  const primary = withIds.find((a) => a.is_default) ?? withIds[0];
-  return { ...u, address: primary, addresses: withIds };
+  const primary = user_addresses.find((a) => a.is_default) ?? user_addresses[0];
+  return { ...u, address: primary, addresses: user_addresses};
 }
 
 function readUser(): ShopUser | null {
@@ -154,6 +148,7 @@ export function ShopAuthProvider({ children }: { children: ReactNode }) {
   const persistSession = useCallback((token: string | null, profile: ShopUser) => {
     setStoredAccessToken(token);
     const normalized = ensureAddressIds(profile);
+    console.log("user normalized",normalized)
     writeUser(normalized);
     setUser(normalized);
     seedDummyOrdersIfEmpty(normalized);
@@ -182,33 +177,8 @@ export function ShopAuthProvider({ children }: { children: ReactNode }) {
     async (phone_no: string, otp: string) => {
       setIsValidating(true);
       try {
-        const { token, raw } = await validateOtp({ phone_no, otp, flow: "login" });
-        const existing = readUser();
-        const phone=phone_no;
-        if (existing && existing.phone === phone) {
-          persistSession(token, existing);
-          return;
-        }
-        const fromApi = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
-        console.log("Address",fromApi)
-        const addr = fromApi.address as CustomerAddress | undefined;
-        const name = typeof fromApi.name === "string" ? fromApi.name : "Customer";
-        if (addr && addr.line1 && addr.city && addr.state && addr.pincode) {
-          persistSession(token, { phone, name, address: addr });
-        } else if (existing) {
-          persistSession(token, { ...existing, phone });
-        } else {
-          persistSession(token, {
-            phone,
-            name,
-            address: {
-              line1: "—",
-              city: "—",
-              state: "—",
-              pincode: "000000",
-            },
-          });
-        }
+        const { token,user, raw } = await validateOtp({ phone_no, otp, flow: "login" });
+        persistSession(token, user);
       } finally {
         setIsValidating(false);
       }

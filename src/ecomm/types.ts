@@ -1,25 +1,62 @@
 export interface CustomerAddress {
-  /** Optional id when stored in the user's address book. */
-  id?: string;
-  /** Human label e.g. Home, Office. */
+  id?: number;
   label?: string;
-  line1: string;
-  line2?: string;
-  city: string;
-  state: string;
-  pincode: string;
-  /** Whether this is the default delivery address. */
+  full_address?: string | null;
+  landmark?: string | null;
+  line1?: string | null;
+  line2?: string | null;
+  city?: string | null;
+  state?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  pincode?: string | null;
+  phone_no?: number | null;
+  name?: string | null;
   is_default?: boolean;
+  user?: number;
 }
 
 export interface ShopUser {
+  id: number;
+  email: string;
+  phone_no: string;
   name: string;
-  phone: string;
-  /** Primary / currently selected address (kept for backwards compat). */
+  gender: string | null;
+  profile_pic: string | null;
+  active_role_type: string;
+  is_phone_verified: boolean;
+  is_otp_verified: boolean;
+
+  /** Primary selected address (backward compatibility) */
   address: CustomerAddress;
-  /** Address book — multi-address support. */
-  addresses?: CustomerAddress[];
+
+  /** Backend response */
+  addresses: CustomerAddress[];
 }
+
+
+// export interface CustomerAddress {
+//   /** Optional id when stored in the user's address book. */
+//   id?: string;
+//   /** Human label e.g. Home, Office. */
+//   label?: string;
+//   line1: string;
+//   line2?: string;
+//   city: string;
+//   state: string;
+//   pincode: string;
+//   /** Whether this is the default delivery address. */
+//   is_default?: boolean;
+// }
+
+// export interface ShopUser {
+//   name: string;
+//   phone: string;
+//   /** Primary / currently selected address (kept for backwards compat). */
+//   address: CustomerAddress;
+//   /** Address book — multi-address support. */
+//   addresses?: CustomerAddress[];
+// }
 
 export interface Category {
   id: string;

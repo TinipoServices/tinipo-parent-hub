@@ -16,7 +16,7 @@ const empty = (): CustomerAddress => ({
   line2: "",
   city: "",
   state: "",
-  pincode: "",
+  pincode: null,
 });
 
 function validate(a: CustomerAddress): string | null {
@@ -33,11 +33,11 @@ export function AddressBook({
   onSelect,
 }: {
   selectable?: boolean;
-  selectedId?: string;
+  selectedId?: number;
   onSelect?: (id: string) => void;
 }) {
   const { user, addAddress, updateAddress, removeAddress, setDefaultAddress } = useShopAuth();
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [draft, setDraft] = useState<CustomerAddress>(empty());
   const [creating, setCreating] = useState(false);
 
