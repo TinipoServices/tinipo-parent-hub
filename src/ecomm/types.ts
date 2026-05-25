@@ -1,6 +1,7 @@
+/** Address as returned by /api/user_address/ */
 export interface CustomerAddress {
-  id?: number;
-  label?: string;
+  id?: number | string;
+  label?: string | null;
   full_address?: string | null;
   landmark?: string | null;
   line1?: string | null;
@@ -9,29 +10,54 @@ export interface CustomerAddress {
   state?: string | null;
   latitude?: number | null;
   longitude?: number | null;
-  pincode?: string | null;
-  phone_no?: number | null;
+  /** Stored as 6-digit string on the client; API may return number. */
+  pincode?: string | number | null;
+  phone_no?: string | number | null;
   name?: string | null;
   is_default?: boolean;
   user?: number;
+  created_at?: string;
+  modified_at?: string;
+  // Legacy aliases (older UI passes these positionally).
+  full_address?: string | null;
 }
 
+/** Payload accepted by POST/PATCH /api/user_address/ */
+export type AddressInput = Partial<
+  Pick<
+    CustomerAddress,
+    | "label"
+    | "full_address"
+    | "landmark"
+    | "line1"
+    | "line2"
+    | "city"
+    | "state"
+    | "latitude"
+    | "longitude"
+    | "pincode"
+    | "phone_no"
+    | "name"
+    | "is_default"
+  >
+>;
+
 export interface ShopUser {
-  id: number;
-  email: string;
-  phone_no: string;
+  id?: number;
+  email?: string;
+  phone_no?: string;
+  /** Back-compat alias surfaced for older UI; equals phone_no. */
+  phone?: string;
   name: string;
-  gender: string | null;
-  profile_pic: string | null;
-  active_role_type: string;
-  is_phone_verified: boolean;
-  is_otp_verified: boolean;
+  gender?: string | null;
+  profile_pic?: string | null;
+  active_role_type?: string;
+  is_phone_verified?: boolean;
+  is_otp_verified?: boolean;
 
-  /** Primary selected address (backward compatibility) */
-  address: CustomerAddress;
-
-  /** Backend response */
-  addresses: CustomerAddress[];
+  /** Optional cached default address. The address book is fetched from the API. */
+  address?: CustomerAddress;
+  addresses?: CustomerAddress[];
 }
 
 
@@ -96,12 +122,17 @@ export interface Subcategory {
 export interface Product {
   id: string;
   name: string;
-  sku: string;
+  sku?: string;
   is_active: boolean;
-  media_url:string;
+  media_url: string;
   is_best_seller?: boolean;
   subcategory_id?: string;
-  tax_class: {
+  category_id?: string;
+  /** Legacy single-number price used by dummy catalog & cart math. */
+  mrp?: number;
+  selling_amount?: number;
+  description?: string;
+  tax_class?: {
     id: number;
     name: string;
     hsn_code: string;
@@ -109,7 +140,7 @@ export interface Product {
     is_active: boolean;
   };
 
-  media: {
+  media?: ({
     id: number;
     created_at: string;
     modified_at: string;
@@ -119,22 +150,22 @@ export interface Product {
     is_primary: boolean;
     media_type: string;
     variant: number;
-  }[];
+  } | string)[];
 
-  price: {
-    mrp: string | null;
-    landing_cost: string | null;
-    selling_price: string | null;
-    stock: number | null;
-    reserved_stock: number | null;
-    is_active: boolean;
-    variant: number | null;
-    city: number | null;
+  price?: {
+    mrp: number | string | null;
+    landing_cost?: number | string | null;
+    selling_price?: number | string | null;
+    stock?: number | null;
+    reserved_stock?: number | null;
+    is_active?: boolean;
+    variant?: number | null;
+    city?: number | null;
   };
 
-  product: {
+  product?: {
     id: number;
-    media: string[];
+    media?: string[];
     created_at: string;
     modified_at: string;
 
@@ -142,50 +173,95 @@ export interface Product {
     slug: string;
     is_active: boolean;
 
-    description: string;
-    short_description: string;
+    description?: string;
+    short_description?: string;
 
     category: number;
     brand: number | null;
   };
 }
 
+/** Status strings the backend returns. */
 export type OrderStatus =
-  | "CREATED"
-  | "PACKED"
-  | "OUT_FOR_DELIVERY"
-  | "DELIVERED"
-  | "RETURNED";
+  | "placed"
+  | "packed"
+  | "shipped"
+  | "out_for_delivery"
+  | "delivered"
+  | "returned"
+  | "cancelled"
+  | string;
 
-export interface OrderLineSnapshot {
-  product_id: string;
-  name: string;
-  media_url: string;
-  mrp: number;
+export interface OrderLineSummary {
+  id: number;
+  product_variant: number;
+  product_name: string;
+  variant_name?: string;
+  sku?: string;
   quantity: number;
+  mrp: string;
+  unit_price: string;
+  discount_amount?: string;
+  tax_amount?: string;
+  final_amount: string;
 }
 
 export interface OrderSummary {
-  id: string;
+  id: number | string;
+  order_no?: string;
+  invoice_no?: string;
+  order_status?: OrderStatus;
+  payment_status?: string;
+  total_amount?: string | number;
+  discount_amount?: string | number;
+  tax_amount?: string | number;
+  payable_amount?: string | number;
   created_at: string;
-  status: OrderStatus;
-  payable_amount: number;
-  payment_mode: string;
-  line_count: number;
+  total_items?: number;
+  // Legacy fields kept for compatibility with old screens.
+  status?: OrderStatus;
+  payment_mode?: string;
+  line_count?: number;
 }
 
 export interface OrderDetail extends OrderSummary {
-  address: CustomerAddress;
-  is_paid: boolean;
-  discount_amount: number;
-  order_price_amount: number;
-  lines: OrderLineSnapshot[];
+  shipping_name?: string;
+  shipping_phone?: string;
+  shipping_address_line_1?: string;
+  shipping_address_line_2?: string;
+  shipping_city?: string;
+  shipping_state?: string;
+  shipping_country?: string;
+  shipping_pincode?: string;
+  order_lines?: OrderLineSummary[];
+  // Legacy:
+  address?: CustomerAddress;
+  is_paid?: boolean;
+  discount_amount?: string | number;
+  order_price_amount?: number | string;
+  lines?: Array<{ product_id: string; name: string; media_url?: string; image?: string; mrp: number; quantity: number }>;
 }
 
+/** Server cart item as returned by GET /api/ecomm/cart/ */
+export interface ServerCartItem {
+  id: number;
+  product_variant: number;
+  product_name: string;
+  sku: string;
+  quantity: number;
+  created_at: string;
+}
+
+/** Client-side cart line — merges server item with locally cached display metadata. */
 export interface CartLine {
+  /** Server cart row id when synced; undefined for guest cart. */
+  cartId?: number;
+  /** Product variant id used to add to cart. */
   productId: string;
   name: string;
   media_url: string;
+  /** Legacy alias for media_url used by older UI. */
+  image?: string;
   unitPrice: number;
   quantity: number;
 }
