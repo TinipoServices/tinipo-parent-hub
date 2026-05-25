@@ -1,6 +1,6 @@
 /** Address as returned by /api/user_address/ */
 export interface CustomerAddress {
-  id?: number;
+  id?: number | string;
   label?: string | null;
   full_address?: string | null;
   landmark?: string | null;
@@ -11,13 +11,15 @@ export interface CustomerAddress {
   latitude?: number | null;
   longitude?: number | null;
   /** Stored as 6-digit string on the client; API may return number. */
-  pincode?: string | null;
-  phone_no?: string | null;
+  pincode?: string | number | null;
+  phone_no?: string | number | null;
   name?: string | null;
   is_default?: boolean;
   user?: number;
   created_at?: string;
   modified_at?: string;
+  // Legacy aliases (older UI passes these positionally).
+  full_address?: string | null;
 }
 
 /** Payload accepted by POST/PATCH /api/user_address/ */
@@ -41,14 +43,14 @@ export type AddressInput = Partial<
 >;
 
 export interface ShopUser {
-  id: number;
-  email: string;
-  phone_no: string;
+  id?: number;
+  email?: string;
+  phone_no?: string;
   /** Back-compat alias surfaced for older UI; equals phone_no. */
   phone?: string;
   name: string;
-  gender: string | null;
-  profile_pic: string | null;
+  gender?: string | null;
+  profile_pic?: string | null;
   active_role_type?: string;
   is_phone_verified?: boolean;
   is_otp_verified?: boolean;
@@ -205,17 +207,21 @@ export interface OrderLineSummary {
 }
 
 export interface OrderSummary {
-  id: number;
-  order_no: string;
-  invoice_no: string;
-  order_status: OrderStatus;
-  payment_status: string;
-  total_amount: string;
-  discount_amount: string;
-  tax_amount: string;
-  payable_amount: string;
+  id: number | string;
+  order_no?: string;
+  invoice_no?: string;
+  order_status?: OrderStatus;
+  payment_status?: string;
+  total_amount?: string | number;
+  discount_amount?: string | number;
+  tax_amount?: string | number;
+  payable_amount?: string | number;
   created_at: string;
-  total_items: number;
+  total_items?: number;
+  // Legacy fields kept for compatibility with old screens.
+  status?: OrderStatus;
+  payment_mode?: string;
+  line_count?: number;
 }
 
 export interface OrderDetail extends OrderSummary {
@@ -227,7 +233,13 @@ export interface OrderDetail extends OrderSummary {
   shipping_state?: string;
   shipping_country?: string;
   shipping_pincode?: string;
-  order_lines: OrderLineSummary[];
+  order_lines?: OrderLineSummary[];
+  // Legacy:
+  address?: CustomerAddress;
+  is_paid?: boolean;
+  discount_amount?: string | number;
+  order_price_amount?: number | string;
+  lines?: Array<{ product_id: string; name: string; media_url?: string; image?: string; mrp: number; quantity: number }>;
 }
 
 /** Server cart item as returned by GET /api/ecomm/cart/ */
@@ -248,6 +260,8 @@ export interface CartLine {
   productId: string;
   name: string;
   media_url: string;
+  /** Legacy alias for media_url used by older UI. */
+  image?: string;
   unitPrice: number;
   quantity: number;
 }
