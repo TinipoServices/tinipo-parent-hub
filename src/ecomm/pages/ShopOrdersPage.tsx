@@ -4,9 +4,10 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { fetchOrderList } from "../api/ecommApi";
-import { formatInr, formatOrderDate, orderStatusLabel } from "../lib/format";
+import { listOrders } from "../api/orderApi";
+import { formatInr, formatOrderDate, orderStatusLabel, orderStatusTone } from "../lib/format";
 import { useShopAuth } from "../context/ShopAuthContext";
+import { toNumber } from "../lib/money";
 import { ChevronRight } from "lucide-react";
 
 export default function ShopOrdersPage() {
@@ -14,7 +15,7 @@ export default function ShopOrdersPage() {
 
   const ordersQuery = useQuery({
     queryKey: ["ecomm", "orders"],
-    queryFn: fetchOrderList,
+    queryFn: listOrders,
     enabled: !!user,
   });
 
@@ -29,6 +30,8 @@ export default function ShopOrdersPage() {
       </div>
     );
   }
+
+  const orders = ordersQuery.data ?? [];
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -47,7 +50,7 @@ export default function ShopOrdersPage() {
         <Card className="p-6 border-destructive/50 text-destructive text-sm">
           {(ordersQuery.error as Error).message}
         </Card>
-      ) : !ordersQuery.data?.length ? (
+      ) : orders.length === 0 ? (
         <Card className="p-8 text-center border-dashed text-muted-foreground">
           No orders yet.{" "}
           <Link to="/shop/products" className="text-primary font-medium hover:underline">
@@ -56,31 +59,37 @@ export default function ShopOrdersPage() {
         </Card>
       ) : (
         <ul className="space-y-3">
-          {ordersQuery.data.map((o) => (
-            <li key={o.id}>
-              <Card className="border-border hover:shadow-card transition-shadow overflow-hidden">
-                <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4">
-                  <div className="flex-1 min-w-0 space-y-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono text-xs text-muted-foreground">{o.id}</span>
-                      <Badge variant="secondary">{orderStatusLabel(o.status)}</Badge>
+          {orders.map((o) => {
+            const status = o.order_status ?? o.status;
+            const payable = toNumber(o.payable_amount ?? o.total_amount);
+            return (
+              <li key={String(o.id)}>
+                <Card className="border-border hover:shadow-card transition-shadow overflow-hidden">
+                  <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-mono text-xs text-muted-foreground">
+                          {o.order_no ?? `#${o.id}`}
+                        </span>
+                        <Badge variant={orderStatusTone(status)}>{orderStatusLabel(status)}</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{formatOrderDate(o.created_at)}</p>
+                      <p className="font-display font-bold text-lg text-primary">{formatInr(payable)}</p>
+                      {(o.total_items ?? o.line_count) != null && (
+                        <p className="text-xs text-muted-foreground">{o.total_items ?? o.line_count} items</p>
+                      )}
                     </div>
-                    <p className="text-sm text-muted-foreground">{formatOrderDate(o.created_at)}</p>
-                    <p className="font-display font-bold text-lg text-primary">{formatInr(o.payable_amount)}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {o.line_count} items · {o.payment_mode}
-                    </p>
-                  </div>
-                  <Button variant="outline" className="w-full sm:w-auto shrink-0" asChild>
-                    <Link to={`/shop/orders/${encodeURIComponent(o.id)}`}>
-                      Details
-                      <ChevronRight className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            </li>
-          ))}
+                    <Button variant="outline" className="w-full sm:w-auto shrink-0" asChild>
+                      <Link to={`/shop/orders/${encodeURIComponent(String(o.id))}`}>
+                        Details
+                        <ChevronRight className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

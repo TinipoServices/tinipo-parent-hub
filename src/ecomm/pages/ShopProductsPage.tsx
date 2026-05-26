@@ -12,6 +12,7 @@ import { formatInr } from "../lib/format";
 import type { Category, Product } from "../types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { readPrice } from "../lib/money";
 
 function CategoryPill({
   c,
@@ -42,9 +43,7 @@ function CategoryPill({
 }
 
 function ProductCard({ p, onAdd, detailTo }: { p: Product; onAdd: () => void; detailTo: string }) {
-  const sell = p.price.selling_price ?? p.price.mrp;
-  const hasDiscount = p.price.selling_price != null && p.price.selling_price < p.price.mrp;
-  const discountPct = hasDiscount ? Math.round(((p.price.mrp - sell) / p.price.mrp) * 100) : 0;
+  const { mrp, sell, hasDiscount, discountPct } = readPrice(p.price ?? undefined);
   return (
     <Card className="overflow-hidden border-border shadow-soft hover:shadow-card transition-shadow h-full flex flex-col">
       <Link to={detailTo} className="block shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset rounded-t-xl">
@@ -70,7 +69,7 @@ function ProductCard({ p, onAdd, detailTo }: { p: Product; onAdd: () => void; de
           <div className="flex items-baseline gap-2 mt-1 flex-wrap">
             <span className="text-base sm:text-lg font-bold text-primary">{formatInr(sell)}</span>
             {hasDiscount && (
-              <span className="text-xs text-muted-foreground line-through">{formatInr(p.price.mrp)}</span>
+              <span className="text-xs text-muted-foreground line-through">{formatInr(mrp)}</span>
             )}
           </div>
         </Link>
@@ -137,11 +136,13 @@ export default function ShopProductsPage() {
   const subcategories = activeCategory?.subcategories ?? [];
 
   const onAddProduct = (p: Product) => {
-    addItem({
-      productId: p.id,
+    const { sell } = readPrice(p.price ?? undefined);
+    void addItem({
+      productId: String(p.id),
       name: p.name,
       media_url: p.media_url,
-      unitPrice: p.price.selling_price ?? p.price.mrp,
+      image: p.media_url,
+      unitPrice: sell,
       quantity: 1,
     });
     toast.success(`${p.name} added to cart`);

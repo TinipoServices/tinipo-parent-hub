@@ -7,31 +7,30 @@ import {
   type ReactNode,
 } from "react";
 import type { CustomerAddress, ShopUser } from "../types";
-import { requestOtp, setStoredAccessToken, validateOtp, seedDummyOrdersIfEmpty } from "../api/ecommApi";
-import { useActionData } from "react-router-dom";
+import { requestOtp, validateOtp } from "../api/ecommApi";
+import { setStoredAccessToken } from "../api/tokenStore";
 
 const USER_KEY = "tinipo_shop_user";
 
-function ensureAddressIds(u: ShopUser): ShopUser {
-  // Backfill addresses[] from primary address for users created before multi-address support.
-  const user_addresses = u.addresses && u.addresses.length > 0 ? u.addresses : [u.address];
-  // Make sure exactly one default exists.
-  const primary = user_addresses.find((a) => a.is_default) ?? user_addresses[0];
-  return { ...u, address: primary, addresses: user_addresses};
+function normalize(u: ShopUser | null): ShopUser | null {
+  if (!u) return null;
+  const phone = u.phone_no || u.phone || "";
+  const addresses = u.addresses && u.addresses.length > 0 ? u.addresses : u.address ? [u.address] : [];
+  const primary = addresses.find((a) => a.is_default) ?? addresses[0];
+  return { ...u, phone, phone_no: phone, addresses, address: primary };
 }
 
 function readUser(): ShopUser | null {
   try {
     const raw = localStorage.getItem(USER_KEY);
     if (!raw) return null;
-    return ensureAddressIds(JSON.parse(raw) as ShopUser);
+    return normalize(JSON.parse(raw) as ShopUser);
   } catch {
     return null;
   }
 }
-
-function writeUser(user: ShopUser | null) {
-  if (user) localStorage.setItem(USER_KEY, JSON.stringify(user));
+function writeUser(u: ShopUser | null) {
+  if (u) localStorage.setItem(USER_KEY, JSON.stringify(u));
   else localStorage.removeItem(USER_KEY);
 }
 
@@ -39,22 +38,22 @@ type ShopAuthContextValue = {
   user: ShopUser | null;
   isSendingOtp: boolean;
   isValidating: boolean;
-  sendSignupOtp: (u: ShopUser) => Promise<void>;
+  sendSignupOtp: (u: { name: string; phone: string }) => Promise<void>;
   sendLoginOtp: (phone: string) => Promise<void>;
-  completeSignupWithOtp: (phone: string, otp: string, profile: ShopUser) => Promise<void>;
+  completeSignupWithOtp: (phone: string, otp: string, profile: { name: string }) => Promise<void>;
   completeLoginWithOtp: (phone: string, otp: string) => Promise<void>;
   signOut: () => void;
-  updateProfile: (u: ShopUser) => void;
-  addAddress: (a: CustomerAddress) => void;
-  updateAddress: (id: string, patch: Partial<CustomerAddress>) => void;
-  removeAddress: (id: string) => void;
-  setDefaultAddress: (id: string) => void;
+  updateProfile: (patch: Partial<ShopUser>) => void;
+  /** Sync addresses from the server into the cached user. */
+  syncAddresses: (list: CustomerAddress[]) => void;
 };
 
 const ShopAuthContext = createContext<ShopAuthContextValue | null>(null);
 
 export function ShopAuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<ShopUser | null>(() => readUser());
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
 
   const signOut = useCallback(() => {
     setStoredAccessToken(null);
@@ -62,110 +61,66 @@ export function ShopAuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
-  const updateProfile = useCallback((u: ShopUser) => {
-    const normalized = ensureAddressIds(u);
-    writeUser(normalized);
-    setUser(normalized);
+  const updateProfile = useCallback((patch: Partial<ShopUser>) => {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const next = normalize({ ...prev, ...patch });
+      writeUser(next);
+      return next;
+    });
   }, []);
 
-  const mutateAddresses = useCallback(
-    (fn: (list: CustomerAddress[]) => CustomerAddress[]) => {
-      setUser((prev) => {
-        if (!prev) return prev;
-        const next = ensureAddressIds({
-          ...prev,
-          addresses: fn(prev.addresses ?? [prev.address]),
-        });
-        writeUser(next);
-        return next;
-      });
-    },
-    [],
-  );
-
-  const addAddress = useCallback(
-    (a: CustomerAddress) => {
-      mutateAddresses((list) => [
-        ...list,
-        { ...a, id: a.id || `addr-${Date.now()}`, is_default: list.length === 0 || a.is_default },
-      ]);
-    },
-    [mutateAddresses],
-  );
-
-  const updateAddress = useCallback(
-    (id: string, patch: Partial<CustomerAddress>) => {
-      mutateAddresses((list) => list.map((a) => (a.id === id ? { ...a, ...patch } : a)));
-    },
-    [mutateAddresses],
-  );
-
-  const removeAddress = useCallback(
-    (id: string) => {
-      mutateAddresses((list) => {
-        const filtered = list.filter((a) => a.id !== id);
-        if (filtered.length === 0) return list; // never remove the last
-        if (!filtered.some((a) => a.is_default)) filtered[0].is_default = true;
-        return filtered;
-      });
-    },
-    [mutateAddresses],
-  );
-
-  const setDefaultAddress = useCallback(
-    (id: string) => {
-      mutateAddresses((list) => list.map((a) => ({ ...a, is_default: a.id === id })));
-    },
-    [mutateAddresses],
-  );
-
-  const [isSendingOtp, setIsSendingOtp] = useState(false);
-  const [isValidating, setIsValidating] = useState(false);
-
-  const sendSignupOtp = useCallback(async (u: ShopUser) => {
-    setIsSendingOtp(true);
-    try {
-      await requestOtp({
-        phone: u.phone,
-        name: u.name,
-        address: u.address,
-        flow: "signup",
-      });
-    } finally {
-      setIsSendingOtp(false);
-    }
+  const syncAddresses = useCallback((list: CustomerAddress[]) => {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const next = normalize({ ...prev, addresses: list });
+      writeUser(next);
+      return next;
+    });
   }, []);
 
-  const sendLoginOtp = useCallback(async (phone_no: string) => {
-    setIsSendingOtp(true);
-    try {
-      await requestOtp({ phone_no, flow: "login" });
-    } finally {
-      setIsSendingOtp(false);
-    }
-  }, []);
-
-  const persistSession = useCallback((token: string | null, profile: ShopUser) => {
+  const persistSession = useCallback((token: string | null, profile: ShopUser | null) => {
     setStoredAccessToken(token);
-    const normalized = ensureAddressIds(profile);
-    console.log("user normalized",normalized)
+    const normalized = normalize(profile);
     writeUser(normalized);
     setUser(normalized);
-    seedDummyOrdersIfEmpty(normalized);
+  }, []);
+
+  const sendSignupOtp = useCallback(async (u: { name: string; phone: string }) => {
+    setIsSendingOtp(true);
+    try {
+      await requestOtp({ phone_no: u.phone, name: u.name, flow: "signup" });
+    } finally {
+      setIsSendingOtp(false);
+    }
+  }, []);
+
+  const sendLoginOtp = useCallback(async (phone: string) => {
+    setIsSendingOtp(true);
+    try {
+      await requestOtp({ phone_no: phone, flow: "login" });
+    } finally {
+      setIsSendingOtp(false);
+    }
   }, []);
 
   const completeSignupWithOtp = useCallback(
-    async (phone: string, otp: string, profile: ShopUser) => {
+    async (phone: string, otp: string, profile: { name: string }) => {
       setIsValidating(true);
       try {
-        const { token } = await validateOtp({
-          phone,
+        const { token, user: u } = await validateOtp({
+          phone_no: phone,
           otp,
           name: profile.name,
-          address: profile.address,
           flow: "signup",
         });
-        persistSession(token, { ...profile, phone });
+        const merged: ShopUser =
+          u ?? {
+            name: profile.name,
+            phone,
+            phone_no: phone,
+          };
+        persistSession(token, merged);
       } finally {
         setIsValidating(false);
       }
@@ -174,11 +129,11 @@ export function ShopAuthProvider({ children }: { children: ReactNode }) {
   );
 
   const completeLoginWithOtp = useCallback(
-    async (phone_no: string, otp: string) => {
+    async (phone: string, otp: string) => {
       setIsValidating(true);
       try {
-        const { token,user, raw } = await validateOtp({ phone_no, otp, flow: "login" });
-        persistSession(token, user);
+        const { token, user: u } = await validateOtp({ phone_no: phone, otp, flow: "login" });
+        persistSession(token, u ?? { name: "", phone, phone_no: phone });
       } finally {
         setIsValidating(false);
       }
@@ -197,10 +152,7 @@ export function ShopAuthProvider({ children }: { children: ReactNode }) {
       completeLoginWithOtp,
       signOut,
       updateProfile,
-      addAddress,
-      updateAddress,
-      removeAddress,
-      setDefaultAddress,
+      syncAddresses,
     }),
     [
       user,
@@ -212,10 +164,7 @@ export function ShopAuthProvider({ children }: { children: ReactNode }) {
       completeLoginWithOtp,
       signOut,
       updateProfile,
-      addAddress,
-      updateAddress,
-      removeAddress,
-      setDefaultAddress,
+      syncAddresses,
     ],
   );
 

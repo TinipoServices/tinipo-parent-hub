@@ -2,7 +2,6 @@
 export interface CustomerAddress {
   id?: number | string;
   label?: string | null;
-  full_address?: string | null;
   landmark?: string | null;
   line1?: string | null;
   line2?: string | null;
@@ -18,7 +17,6 @@ export interface CustomerAddress {
   user?: number;
   created_at?: string;
   modified_at?: string;
-  // Legacy aliases (older UI passes these positionally).
   full_address?: string | null;
 }
 
