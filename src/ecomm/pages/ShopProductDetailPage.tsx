@@ -5,7 +5,7 @@ import { ArrowLeft, ChevronLeft, ChevronRight, MapPin, Minus, Plus, ShoppingCart
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { fetchProductDetail } from "../api/ecommApi";
+import { fetchProductDetail, productGallery } from "../api/ecommApi";
 import { useCart } from "../context/CartContext";
 import { useLocation as useShopLocation } from "../context/LocationContext";
 import { formatInr } from "../lib/format";
@@ -27,15 +27,7 @@ export default function ShopProductDetailPage() {
   });
 
   const p = detailQuery.data;
-  const gallery = useMemo(() => {
-    if (!p) return [];
-  
-    if (p.media?.length) {
-      return p.media.map((m) => m.media_url);
-    }
-  
-    return p.media_url ? [p.media_url] : [];
-  }, [p]);
+  const gallery = useMemo(() => (p ? productGallery(p) : []), [p]);
 
   const mainSrc = gallery[activeIdx] ?? gallery[0];
 
@@ -54,10 +46,11 @@ export default function ShopProductDetailPage() {
       p?.price?.mrp ??
       0
     );
-    addItem({
-      productId: p.id,
+    void addItem({
+      productId: String(p.id),
       name: p.name,
       media_url: p.media_url,
+      image: p.media_url,
       unitPrice: sell,
       quantity: qty,
     });
