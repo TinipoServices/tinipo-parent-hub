@@ -32,9 +32,9 @@ export const orderCancelPath = (id: number | string) => `/api/ecomm/orders/${id}
 //   return `/api/ecomm/product_variant/detail/${encodeURIComponent(productId)}/`;
 // }
 
-/** When not "false", catalog/orders use local dummy data + localStorage for orders. Set VITE_ECOMM_USE_MOCK=false to call the real API. */
+/** Kept for back-compat — always false now. */
 export function isEcommMockMode(): boolean {
-  return import.meta.env.VITE_ECOMM_USE_MOCK !== "false";
+  return false;
 }
 
 export function apiUrl(path: string): string {
