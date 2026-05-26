@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,8 @@ import { Label } from "@/components/ui/label";
 import { useCart } from "../context/CartContext";
 import { useShopAuth } from "../context/ShopAuthContext";
 import { useLocation as useShopLocation } from "../context/LocationContext";
-import { confirmOrder } from "../api/ecommApi";
+import { listAddresses } from "../api/addressApi";
+import { createOrder } from "../api/orderApi";
 import { formatInr } from "../lib/format";
 import { Minus, Plus, Trash2, MapPin, AlertTriangle, Wallet, Banknote } from "lucide-react";
 import { AddressBook } from "../components/AddressBook";
@@ -26,36 +27,46 @@ export default function ShopCheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [paymentMode, setPaymentMode] = useState<"COD" | "ONLINE">("COD");
   const [editingAddresses, setEditingAddresses] = useState(false);
-  const [selectedAddressId, setSelectedAddressId] = useState<string | undefined>(undefined);
+  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
+
+  const addressesQuery = useQuery({
+    queryKey: ["ecomm", "addresses"],
+    queryFn: listAddresses,
+    enabled: !!user,
+  });
+
+  const addresses = addressesQuery.data ?? [];
+  const selectedAddress =
+    addresses.find((a) => Number(a.id) === selectedAddressId) ??
+    addresses.find((a) => a.is_default) ??
+    addresses[0];
 
   useEffect(() => {
-    if (!user) return;
-    const list = user.addresses ?? [user.address];
-    if (!selectedAddressId) {
-      const def = list.find((a) => a.is_default) ?? list[0];
-      setSelectedAddressId(def?.id);
+    if (selectedAddressId == null && addresses.length > 0) {
+      const def = addresses.find((a) => a.is_default) ?? addresses[0];
+      if (def?.id != null) setSelectedAddressId(Number(def.id));
     }
     void loadRazorpayScript();
-  }, [user, selectedAddressId]);
+  }, [addresses, selectedAddressId]);
 
-  const selectedAddress =
-    user && selectedAddressId
-      ? (user.addresses ?? [user.address]).find((a) => a.id === selectedAddressId) ?? user.address
-      : user?.address;
-
-  const deliveryPin = selectedAddress?.pincode;
+  const deliveryPin =
+    selectedAddress?.pincode == null ? "" : String(selectedAddress.pincode).replace(/\D/g, "");
   const serviceable = isPinServiceable(deliveryPin);
 
   const addressComplete =
     !!selectedAddress &&
-    !!selectedAddress.line1.trim() &&
-    !!selectedAddress.city.trim() &&
-    !!selectedAddress.state.trim() &&
-    !!selectedAddress.pincode.trim();
+    !!String(selectedAddress.line1 ?? "").trim() &&
+    !!String(selectedAddress.city ?? "").trim() &&
+    !!String(selectedAddress.state ?? "").trim() &&
+    deliveryPin.length === 6;
 
   const placeOrder = async (extra?: { payment_id?: string }) => {
-    if (!user || !addressComplete || !selectedAddress) {
+    if (!user || !selectedAddress || selectedAddress.id == null) {
       toast.error("Please sign in and pick a delivery address.");
+      return;
+    }
+    if (!addressComplete) {
+      toast.error("Selected address is missing details.");
       return;
     }
     if (!serviceable) {
@@ -65,12 +76,8 @@ export default function ShopCheckoutPage() {
     if (lines.length === 0) return;
     setSubmitting(true);
     try {
-      await confirmOrder({
-        lines: lines.map((l) => ({ product_id: l.productId, quantity: l.quantity })),
-        address: selectedAddress,
-        payment_mode: paymentMode,
-      });
-      clear();
+      await createOrder({ address_id: Number(selectedAddress.id) });
+      await clear();
       await queryClient.invalidateQueries({ queryKey: ["ecomm", "orders"] });
       toast.success(
         paymentMode === "COD"
@@ -103,8 +110,8 @@ export default function ShopCheckoutPage() {
         amountInPaise: Math.round(subtotal * 100),
         name: "Tinipo",
         description: `${lines.length} item${lines.length === 1 ? "" : "s"}`,
-        prefill: { name: user.name, contact: user.phone },
-        notes: { pincode: selectedAddress.pincode },
+        prefill: { name: user.name, contact: String(user.phone_no ?? user.phone ?? "") },
+        notes: { pincode: deliveryPin },
       });
       await placeOrder({ payment_id: result.razorpay_payment_id });
     } catch (e) {
@@ -162,7 +169,7 @@ export default function ShopCheckoutPage() {
             <Card key={line.productId} className="overflow-hidden border-border">
               <CardContent className="p-4 sm:p-5 flex gap-4">
                 <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl bg-muted shrink-0 overflow-hidden">
-                  <img src={line.image} alt="" className="w-full h-full object-cover" />
+                  <img src={line.media_url || line.image || ""} alt="" className="w-full h-full object-cover" />
                 </div>
                 <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
@@ -193,7 +200,11 @@ export default function ShopCheckoutPage() {
                 <Button size="sm" variant="ghost" onClick={() => setEditingAddresses(false)}>Done</Button>
               </CardHeader>
               <CardContent>
-                <AddressBook selectable selectedId={selectedAddressId} onSelect={(id) => setSelectedAddressId(id)} />
+                <AddressBook
+                  selectable
+                  selectedId={selectedAddressId}
+                  onSelect={(id) => setSelectedAddressId(id)}
+                />
               </CardContent>
             </Card>
           )}
@@ -215,12 +226,12 @@ export default function ShopCheckoutPage() {
                   <p className="font-medium text-foreground">
                     {user.name}{selectedAddress.label ? ` · ${selectedAddress.label}` : ""}
                   </p>
-                  <p>{user.phone}</p>
+                  <p>{String(user.phone_no ?? user.phone ?? "")}</p>
                   <p>{selectedAddress.line1}{selectedAddress.line2 ? `, ${selectedAddress.line2}` : ""}</p>
-                  <p>{selectedAddress.city}, {selectedAddress.state} {selectedAddress.pincode}</p>
+                  <p>{selectedAddress.city}, {selectedAddress.state} {deliveryPin}</p>
                 </>
               ) : (
-                <p>No address selected. Add one in your account.</p>
+                <p>No address selected. <button type="button" className="text-primary underline" onClick={() => setEditingAddresses(true)}>Add one</button> to continue.</p>
               )}
               {selectedAddress && !serviceable && (
                 <div className="mt-2 flex items-start gap-2 rounded-lg bg-amber-50 border border-amber-200 p-2 text-amber-900 text-xs">
@@ -245,17 +256,18 @@ export default function ShopCheckoutPage() {
                   <Banknote className="h-4 w-4 text-primary" />
                   <span className="text-sm font-medium">Cash on delivery</span>
                 </Label>
-                <Label htmlFor="pm-online" className="flex items-center gap-3 rounded-xl border border-border p-3 cursor-pointer hover:border-primary/40 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
-                  <RadioGroupItem value="ONLINE" id="pm-online" />
-                  <Wallet className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium">Pay online (Razorpay)</span>
-                </Label>
+                {getRazorpayKeyId() ? (
+                  <Label htmlFor="pm-online" className="flex items-center gap-3 rounded-xl border border-border p-3 cursor-pointer hover:border-primary/40 has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                    <RadioGroupItem value="ONLINE" id="pm-online" />
+                    <Wallet className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium">Pay online (Razorpay)</span>
+                  </Label>
+                ) : (
+                  <p className="mt-2 text-xs text-amber-700">
+                    Add <code className="font-mono">VITE_RAZORPAY_KEY_ID</code> as a build secret to enable online payments.
+                  </p>
+                )}
               </RadioGroup>
-              {paymentMode === "ONLINE" && !getRazorpayKeyId() && (
-                <p className="mt-2 text-xs text-amber-700">
-                  Add <code className="font-mono">VITE_RAZORPAY_KEY_ID</code> as a Workspace Build Secret to enable online payments.
-                </p>
-              )}
             </CardContent>
           </Card>
 
